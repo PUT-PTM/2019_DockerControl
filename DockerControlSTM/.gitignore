@@ -1,0 +1,12 @@
+cmake-build-debug/
+.idea/*
+*.tmp
+Drivers
+startup
+.cproject
+.mxproject
+.project
+CMakeLists.txt
+CMakeLists_template.txt
+STM32F407VGTx_FLASH.ld
+syscalls.c
