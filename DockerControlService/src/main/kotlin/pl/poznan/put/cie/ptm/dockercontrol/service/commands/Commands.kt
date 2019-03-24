@@ -2,10 +2,6 @@ package pl.poznan.put.cie.ptm.dockercontrol.service.commands
 
 object Commands {
 
-    const val PACKET_START = '$'
-    const val PACKET_END = '#'
-    const val PACKET_PART_DELIMITER = '!'
-
     private val commands = hashMapOf(
         CMD.ACK to Command::ack,
         CMD.CALL to Command::getAllContainers,

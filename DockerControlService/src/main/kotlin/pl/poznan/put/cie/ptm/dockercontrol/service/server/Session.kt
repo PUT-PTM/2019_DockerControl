@@ -38,7 +38,7 @@ class Session (
 
     private suspend fun read() {
         while (true) {
-            val rawPacket = input.readPacket(Header.SIZE).readText()
+            val rawPacket = input.readPacket(Packet.HEADER_SIZE).readText()
             val response = try {
                 processPacket(rawPacket)
             } catch (e: TCPServerException) {
@@ -59,7 +59,7 @@ class Session (
     private suspend fun processHeader(rawHeader: String): Packet {
         Logger.log("header: $rawHeader", this)
         return if (Header.isHeader(rawHeader)) {
-            val header = Header(rawHeader)
+            val header = Packet.decodeHeader(rawHeader)
             if (header.sessionId == id) {
                 val rawBody = input.readPacket(header.bodySize).readText()
                 processBody(rawBody)
@@ -70,7 +70,7 @@ class Session (
     private fun processBody(rawBody: String): Packet {
         Logger.log("body: $rawBody", this)
         return if (Body.isBody(rawBody)) {
-            val body = Body(rawBody)
+            val body = Packet.decodeBody(rawBody)
             val response = Commands.process(body.cmd, body.data)
             Packet(id, Body(body.cmd, response))
         } else throw TCPServerException("invalid body")
