@@ -5,6 +5,7 @@ import io.ktor.network.sockets.openReadChannel
 import io.ktor.network.sockets.openWriteChannel
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.io.readPacket
 import kotlinx.coroutines.io.writeFully
 import kotlinx.coroutines.launch
@@ -26,7 +27,10 @@ class Session (
     init {
         job = GlobalScope.launch {
             try {
-                output.writeFully("sessionId: $id".toByteArray())
+                delay(2500)
+                val welcomePacket = Packet(id, Body(CMD.ACK)).make()
+                Logger.log(welcomePacket)
+                output.writeFully(welcomePacket.toByteArray())
                 read()
             } catch (e: Throwable) {
                 e.printStackTrace()
@@ -48,6 +52,7 @@ class Session (
                 input.discard(input.availableForRead.toLong())
             }
 
+            Logger.log(response.make(), this)
             output.writeFully(response.make().toByteArray())
         }
     }
