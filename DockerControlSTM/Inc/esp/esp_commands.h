@@ -1,0 +1,21 @@
+#ifndef HELLO_WIFI_ESP_COMMANDS_H
+#define HELLO_WIFI_ESP_COMMANDS_H
+
+#include <sched.h>
+
+#define ESP_TEST "AT\r\n"
+#define ESP_NO_ECHO "ATE0\r\n"
+#define ESP_VERSION "AT+GMR\r\n"
+
+#define ESP_WIFI_CLIENT "AT+CWMODE=1\r\n"
+#define ESP_WIFI_CONNECT_R "AT+CWJAP=\"R\",\"Rigle_Da_3est#\"\r\n"
+#define ESP_GET_IP "AT+CIFSR\r\n"
+
+#define ESP_SERVER_IP "192.168.1.253"
+#define ESP_SERVER_PORT "1500"
+
+#define ESP_TCP_CONNECT_TO_SERVER "AT+CIPSTART=\"TCP\",\"" ESP_SERVER_IP "\"," ESP_SERVER_PORT "\r\n"
+#define ESP_PASSTHROUGH_MODE "AT+CIPMODE=1\r\n"
+#define ESP_PASSTHROUGH_START "AT+CIPSEND\r\n"
+
+#endif //HELLO_WIFI_ESP_COMMANDS_H
