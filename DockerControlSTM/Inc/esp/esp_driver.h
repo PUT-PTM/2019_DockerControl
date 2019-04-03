@@ -1,6 +1,8 @@
 #ifndef HELLO_WIFI_ESP_DRIVER_H
 #define HELLO_WIFI_ESP_DRIVER_H
 
+#include "esp_connection_data.h"
+
 enum esp_connection_state { IDLE, WAIT_HEADER, WAIT_BODY };
 
 enum esp_cmd { ACK, CALL, CACT };
