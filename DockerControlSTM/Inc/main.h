@@ -53,6 +53,13 @@ extern "C" {
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
 
+#include <stdlib.h>
+#include <string.h>
+
+#include <esp/esp_driver.h>
+#include <esp/esp_commands.h>
+#include <utils.h>
+
 /* USER CODE END Includes */
 
 /* Exported types ------------------------------------------------------------*/
@@ -74,6 +81,8 @@ extern "C" {
 void Error_Handler(void);
 
 /* USER CODE BEGIN EFP */
+
+void start_esp();
 
 /* USER CODE END EFP */
 
