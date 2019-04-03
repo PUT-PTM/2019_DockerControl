@@ -5,6 +5,12 @@
 #include "utils.h"
 #include <stdlib.h>
 
+const char * server_ip = DEFAULT_SERVER_IP;
+const char * server_port = DEFAULT_SERVER_PORT;
+
+const char * wifi_name = DEFAULT_WIFI_NAME;
+const char * wifi_password = DEFAULT_WIFI_PASSWORD;
+
 uint8_t packet_header[10];
 uint8_t packet_body[4096];
 
@@ -31,24 +37,37 @@ void esp_init(UART_HandleTypeDef * const huart) {
     const char * command = ESP_NO_ECHO;
     esp_send_command(huart, command);
     util_log(command);
+    free((void *) command);
     HAL_Delay(100);
 
     // set esp as client
     command = ESP_WIFI_CLIENT;
     esp_send_command(huart, command);
     util_log(command);
+    free((void *) command);
     HAL_Delay(1000);
 
     // connect esp to wifi
-    command = ESP_WIFI_CONNECT_R;
-    esp_send_command(huart, command);
-    util_log(command);
+    char wifi[50];
+    wifi[0] = '\0';
+
+    strcat(wifi, ESP_WIFI_CONNECT_BEGIN);
+    strcat(wifi, wifi_name);
+    strcat(wifi, ESP_WIFI_CONNECT_DELIMITER);
+    strcat(wifi, wifi_password);
+    strcat(wifi, ESP_WIFI_CONNECT_END);
+    strcat(wifi, "\0");
+
+    esp_send_command(huart, wifi);
+    util_log(wifi);
+
     HAL_Delay(10000);
 
     // get esp ip
     command = ESP_GET_IP;
     esp_send_command(huart, command);
     util_log(command);
+    free((void *) command);
     HAL_Delay(800);
 
     util_log("esp ready");
@@ -69,7 +88,18 @@ void esp_test(UART_HandleTypeDef * const huart) {
 void esp_passthrough(UART_HandleTypeDef * const huart) {
     util_log("enter esp passthrough");
 
-    esp_send_command(huart, ESP_TCP_CONNECT_TO_SERVER);
+    char server[150];
+    server[0] = '\0';
+
+    strcat(server, ESP_TCP_CONNECT_TO_SERVER_BEGIN);
+    strcat(server, server_ip);
+    strcat(server, ESP_TCP_CONNECT_TO_SERVER_DELIMITER);
+    strcat(server, server_port);
+    strcat(server, ESP_TCP_CONNECT_TO_SERVER_END);
+    strcat(server, "\0");
+
+    esp_send_command(huart, server);
+    util_log(server);
     HAL_Delay(1000);
 
     esp_send_command(huart, ESP_PASSTHROUGH_MODE);
