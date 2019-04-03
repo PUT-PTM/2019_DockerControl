@@ -88,7 +88,18 @@ void esp_test(UART_HandleTypeDef * const huart) {
 void esp_passthrough(UART_HandleTypeDef * const huart) {
     util_log("enter esp passthrough");
 
-    esp_send_command(huart, ESP_TCP_CONNECT_TO_SERVER);
+    char server[150];
+    server[0] = '\0';
+
+    strcat(server, ESP_TCP_CONNECT_TO_SERVER_BEGIN);
+    strcat(server, server_ip);
+    strcat(server, ESP_TCP_CONNECT_TO_SERVER_DELIMITER);
+    strcat(server, server_port);
+    strcat(server, ESP_TCP_CONNECT_TO_SERVER_END);
+    strcat(server, "\0");
+
+    esp_send_command(huart, server);
+    util_log(server);
     HAL_Delay(1000);
 
     esp_send_command(huart, ESP_PASSTHROUGH_MODE);
