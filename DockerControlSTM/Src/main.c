@@ -69,6 +69,12 @@ UART_HandleTypeDef huart3;
 
 /* USER CODE BEGIN PV */
 
+extern const char * server_ip;
+extern const char * server_port;
+
+extern const char * wifi_name;
+extern const char * wifi_password;
+
 extern uint8_t packet_header[10];
 extern uint8_t packet_body[4096];
 
