@@ -1,0 +1,12 @@
+#ifndef DOCKERCONTROLSTM_ESP_CONNECTION_DATA_H
+#define DOCKERCONTROLSTM_ESP_CONNECTION_DATA_H
+
+// define default connection parameters here
+
+#define DEFAULT_WIFI_NAME "wifi"
+#define DEFAULT_WIFI_PASSWORD "wifi_pass"
+
+#define DEFAULT_SERVER_IP "ip"
+#define DEFAULT_SERVER_PORT "port"
+
+#endif //DOCKERCONTROLSTM_ESP_CONNECTION_DATA_H

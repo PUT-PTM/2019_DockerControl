@@ -40,7 +40,7 @@ void esp_init(UART_HandleTypeDef * const huart) {
     HAL_Delay(1000);
 
     // connect esp to wifi
-    command = ESP_WIFI_CONNECT_R;
+    command = ESP_WIFI_CONNECT;
     esp_send_command(huart, command);
     util_log(command);
     HAL_Delay(10000);
