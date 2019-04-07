@@ -80,7 +80,7 @@ extern uint8_t packet_body[4096];
 
 extern enum esp_connection_state connection_state;
 
-extern enum esp_cmd cmd;
+extern enum DC_COMMAND_ENUM cmd;
 extern uint8_t cmd_received;
 
 uint8_t uart_receive[5];
@@ -188,6 +188,10 @@ int main(void)
     {
         if (cmd_received == 1) {
             util_log("got cmd");
+
+            cmd = dc_resolve_cmd(packet_body);
+            util_log(DC_COMMAND_STRING[cmd]);
+
             cmd_received = 0;
         }
         if(usb_received == 1){

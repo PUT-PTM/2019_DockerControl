@@ -17,7 +17,6 @@ uint8_t packet_body[4096];
 enum esp_connection_state connection_state = IDLE;
 
 uint8_t cmd_received = 0;
-enum esp_cmd cmd = ACK;
 
 void esp_wait(UART_HandleTypeDef * const huart) {
     util_log("waiting for esp...");
