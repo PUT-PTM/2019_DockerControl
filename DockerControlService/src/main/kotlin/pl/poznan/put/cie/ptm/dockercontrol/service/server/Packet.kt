@@ -1,6 +1,7 @@
 package pl.poznan.put.cie.ptm.dockercontrol.service.server
 
 import pl.poznan.put.cie.ptm.dockercontrol.service.commands.Body
+import pl.poznan.put.cie.ptm.dockercontrol.service.commands.CMD
 import pl.poznan.put.cie.ptm.dockercontrol.service.commands.Header
 
 data class Packet(
@@ -29,6 +30,8 @@ data class Packet(
             rawHeader.substring(BODY_SIZE_BEGIN, BODY_SIZE_BEGIN + BODY_SIZE_SIZE).toInt()
         )
     }
+
+    constructor(sessionId: Int, cmd: CMD, body: String = "") : this(sessionId, Body(cmd, body))
 
     fun make(): String {
         val bodyPacket = "${body.cmd}$PACKET_PART_DELIMITER${body.data}$PACKET_END"

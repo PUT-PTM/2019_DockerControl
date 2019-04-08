@@ -5,7 +5,6 @@ import io.ktor.network.sockets.openReadChannel
 import io.ktor.network.sockets.openWriteChannel
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.Job
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.io.readPacket
 import kotlinx.coroutines.io.writeFully
 import kotlinx.coroutines.launch
@@ -19,18 +18,14 @@ class Session (
     val id: Int,
     private val connection: Socket
 ) {
+    var active = false
     val job: Job
     private val input = connection.openReadChannel()
     private val output = connection.openWriteChannel(autoFlush = true)
 
-
     init {
         job = GlobalScope.launch {
             try {
-                delay(2500)
-                val welcomePacket = Packet(id, Body(CMD.ACK)).make()
-                Logger.log(welcomePacket)
-                output.writeFully(welcomePacket.toByteArray())
                 read()
             } catch (e: Throwable) {
                 e.printStackTrace()
@@ -40,46 +35,60 @@ class Session (
         }
     }
 
+    companion object {
+        const val INACTIVE_SESSION_ID = 0
+    }
+
     private suspend fun read() {
         while (true) {
             val rawPacket = input.readPacket(Packet.HEADER_SIZE).readText()
+
             val response = try {
                 processPacket(rawPacket)
-            } catch (e: TCPServerException) {
+            } catch (e: SessionException) {
                 Logger.log("error: ${e.message}", this)
-                Packet(id, Body(CMD.ERR, "${e.message}"))
+                Packet(id, CMD.ERRR, "${e.message}")
             } finally {
                 input.discard(input.availableForRead.toLong())
             }
 
-            Logger.log(response.make(), this)
-            output.writeFully(response.make().toByteArray())
+            send(response)
         }
     }
 
-    private suspend fun processPacket(packet: String): Packet {
-        return processHeader(packet)
-    }
+    private suspend fun processPacket(packet: String): Packet = processHeader(packet)
 
     private suspend fun processHeader(rawHeader: String): Packet {
         Logger.log("header: $rawHeader", this)
         return if (Header.isHeader(rawHeader)) {
             val header = Packet.decodeHeader(rawHeader)
-            if (header.sessionId == id) {
-                val rawBody = input.readPacket(header.bodySize).readText()
-                processBody(rawBody)
-            } else throw TCPServerException("invalid session id")
-        } else throw TCPServerException("invalid header")
+
+            if (active && header.sessionId != id) throw SessionException("invalid session id")
+            if (!active && header.sessionId != INACTIVE_SESSION_ID) throw SessionException("session inactive")
+
+            processRawBody(header)
+        } else throw SessionException("invalid header")
+    }
+
+    private suspend fun processRawBody(header: Header): Packet {
+        val rawBody = input.readPacket(header.bodySize).readText()
+        return processBody(rawBody)
     }
 
     private fun processBody(rawBody: String): Packet {
         Logger.log("body: $rawBody", this)
         return if (Body.isBody(rawBody)) {
             val body = Packet.decodeBody(rawBody)
-            val response = Commands.process(body.cmd, body.data)
-            Packet(id, Body(body.cmd, response))
-        } else throw TCPServerException("invalid body")
+            val response = Commands.process(body.cmd, body.data, this)
+            Packet(id, body.cmd, response)
+        } else throw SessionException("invalid body")
     }
 
-    internal class TCPServerException(msg: String) : Exception(msg)
+    private suspend fun send(packet: Packet) {
+        val toSend = packet.make()
+        Logger.log(toSend)
+        output.writeFully(toSend.toByteArray())
+    }
+
+    class SessionException(msg: String) : Exception(msg)
 }
