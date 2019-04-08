@@ -5,7 +5,6 @@
 
 enum esp_connection_state { IDLE, WAIT_HEADER, WAIT_BODY };
 
-
 void esp_wait(UART_HandleTypeDef * huart);
 
 void esp_init(UART_HandleTypeDef * huart);

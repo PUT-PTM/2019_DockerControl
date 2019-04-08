@@ -5,19 +5,20 @@
 #define PACKET_DELIMITER '!'
 #define PACKET_END '#'
 
-
 #define FOREACH_DC_COMMAND(DC_COMMAND) \
-        DC_COMMAND(ACK)   \
-        DC_COMMAND(CALL)  \
-        DC_COMMAND(CATC)  \
-        DC_COMMAND(CSTS)  \
-        DC_COMMAND(CSTOP) \
-        DC_COMMAND(CRST)  \
-        DC_COMMAND(CRM)   \
-        DC_COMMAND(CMK)   \
-        DC_COMMAND(IALL)  \
-        DC_COMMAND(STS)   \
-        DC_COMMAND(ALRT)
+        DC_COMMAND(READ) \
+        DC_COMMAND(ACKN) \
+        DC_COMMAND(CALL) \
+        DC_COMMAND(CATC) \
+        DC_COMMAND(CSTS) \
+        DC_COMMAND(CSTP) \
+        DC_COMMAND(CRST) \
+        DC_COMMAND(CRMV) \
+        DC_COMMAND(CMKI) \
+        DC_COMMAND(IALL) \
+        DC_COMMAND(SSTS) \
+        DC_COMMAND(ALRT) \
+        DC_COMMAND(ERRR)
 
 #define GENERATE_ENUM(ENUM) ENUM,
 #define GENERATE_STRING(STRING) #STRING,
@@ -29,6 +30,5 @@ enum DC_COMMAND_ENUM {
 static const char *DC_COMMAND_STRING[] = {
     FOREACH_DC_COMMAND(GENERATE_STRING)
 };
-
 
 #endif //DOCKERCONTROLSTM_DC_COMMANDS_H

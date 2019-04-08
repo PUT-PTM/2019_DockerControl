@@ -5,6 +5,4 @@
 
 enum DC_COMMAND_ENUM dc_resolve_cmd(const uint8_t * body);
 
-const uint8_t cmd_size(const uint8_t * body);
-
 #endif //DOCKERCONTROLSTM_DC_H
