@@ -157,7 +157,7 @@ int button_enter(){
   }
 }
 
-int button_confirm(){\
+int button_confirm(){
   if(confirm_pressed){
     confirm_pressed = 0;
     return 1;
@@ -167,7 +167,7 @@ int button_confirm(){\
   }
 }
 
-void temp_confirm();
+void temp_confirm() {}
 
 menu show_menu(current){
   switch (current_menu) {
