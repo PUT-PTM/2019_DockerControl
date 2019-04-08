@@ -84,7 +84,7 @@ void Error_Handler(void);
 
 /* USER CODE BEGIN EFP */
 
-void start_esp();
+void start_dc();
 
 /* USER CODE END EFP */
 

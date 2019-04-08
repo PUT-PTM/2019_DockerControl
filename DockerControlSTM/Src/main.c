@@ -97,11 +97,10 @@ static void MX_GPIO_Init(void);
 static void MX_USART3_UART_Init(void);
 /* USER CODE BEGIN PFP */
 
-void start_esp() {
+void start_dc() {
     HAL_UART_Receive_IT(&huart3, uart_receive, uart_size);
 
-    esp_init(&huart3);
-    esp_passthrough(&huart3);
+    dc_start_session(&huart3);
 
     HAL_UART_AbortReceive_IT(&huart3);
     HAL_UART_Receive_IT(&huart3, packet_header, sizeof(packet_header));
@@ -172,7 +171,7 @@ int main(void)
   HAL_GPIO_WritePin(GPIOD, GPIO_PIN_12, GPIO_PIN_SET);
   util_log("DockerControl start");
 
-  start_esp();
+  start_dc();
 
   /* USER CODE END 2 */
 
@@ -189,7 +188,7 @@ int main(void)
         if (cmd_received == 1) {
             util_log("got cmd");
 
-            cmd = dc_resolve_cmd(packet_body);
+            dc_resolve_cmd(packet_body);
             util_log(DC_COMMAND_STRING[cmd]);
 
             cmd_received = 0;
