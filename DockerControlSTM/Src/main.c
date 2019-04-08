@@ -77,10 +77,19 @@ volatile int pulse_count;
 volatile int positions;
 char name[48];
 volatile int name_pos = 0;
+int character = 0;
 int shift = 0;
+int back = 0;
+const char * menu_debug = "";
 
+const char * menu_first_line = "";
+
+const char * menu_second_line = "";
+
+volatile int enter_pressed = 0;
 
 extern const char * server_ip;
+
 extern const char * server_port;
 
 extern const char * wifi_name;
@@ -100,6 +109,13 @@ const uint16_t uart_size = 5;
 uint8_t usb_data[40];
 uint8_t usb_received = 0;
 
+typedef enum{
+    MENU_START,
+    MENU_DEFAULT,
+    MENU_CUSTOM,
+    MENU_CUSTOM_SERVER_IP
+} menu;
+menu current_menu = MENU_START;
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -110,6 +126,84 @@ static void MX_TIM1_Init(void);
 static void MX_TIM2_Init(void);
 static void MX_TIM4_Init(void);
 /* USER CODE BEGIN PFP */
+
+menu show_menu(current){
+  switch (current_menu) {
+    case MENU_START:
+      switch (positions % 2) {
+        case 0:
+          menu_first_line = ">Default";
+          menu_second_line = " Custom";
+          if (enter_pressed == 1) {
+            enter_pressed = 0;
+            current_menu = MENU_DEFAULT;
+          }
+        break;
+        case 1:
+          menu_first_line = " Default";
+          menu_second_line = ">Custom";
+          if (enter_pressed == 1) {
+            enter_pressed = 0;
+            current_menu = MENU_CUSTOM;
+          }
+        break;
+        default:break;
+      }
+    break;
+    case MENU_DEFAULT:
+      menu_first_line = "Connecting using defaults";
+    break;
+    case MENU_CUSTOM:
+      switch (positions % 4) {
+        case 0:
+          menu_first_line = ">Server IP";
+          menu_second_line = " Server port";
+          if (enter_pressed == 1) {
+            enter_pressed = 0;
+            current_menu = MENU_CUSTOM_SERVER_IP;
+          }
+          break;
+        case 1:
+          menu_first_line = ">Server port";
+          menu_second_line = " WiFi Name";
+          if (enter_pressed == 1) {
+            enter_pressed = 0;
+            return MENU_CUSTOM;
+          }
+          break;
+        case 2:
+          menu_first_line = ">WiFi Name";
+          menu_second_line = " WiFi Password";
+          if (enter_pressed == 1) {
+            enter_pressed = 0;
+            return MENU_CUSTOM;
+          }
+          break;
+        case 3:
+          menu_first_line = " WiFi Name";
+          menu_second_line = ">WiFi Password";
+          if (enter_pressed == 1) {
+            enter_pressed = 0;
+            return MENU_CUSTOM;
+          }
+          break;
+        default:break;
+      }
+    break;
+    case MENU_CUSTOM_SERVER_IP:
+      character = positions+65+(shift*32);
+      hd44780_position(0, 1);
+    hd44780_printf("Letter: %s", character);
+      menu_second_line = name;
+      if(enter_pressed == 1){
+        enter_pressed = 0;
+        name[name_pos] = (char)character;
+        name_pos++;
+      }
+    break;
+
+  }
+}
 
 void start_esp() {
     HAL_UART_Receive_IT(&huart3, uart_receive, uart_size);
@@ -149,16 +243,34 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim){
   volatile TIM_TypeDef *temp = htim->Instance;
   if(htim->Instance == TIM2){
     if (HAL_GPIO_ReadPin(GPIOE, GPIO_PIN_5) == GPIO_PIN_SET) {
-      name[name_pos] = (char)(65+positions);
-      name_pos++;
+//      name[name_pos] = (char)(65+positions);
+//      name_pos++;
+        enter_pressed = 1;
     }
     else if (HAL_GPIO_ReadPin(GPIOD, GPIO_PIN_1) == GPIO_PIN_SET) {
         shift = !shift;
     }
-//    else if (HAL_GPIO_ReadPin(GPIOE, GPIO_PIN_2) == GPIO_PIN_SET) {
-//    }
+    else if (HAL_GPIO_ReadPin(GPIOD, GPIO_PIN_2) == GPIO_PIN_SET) {
+      back = !back;
+      current_menu = MENU_START;
+    }
     HAL_GPIO_TogglePin(GPIOD, GPIO_PIN_15);
     HAL_TIM_Base_Stop(&htim2);
+  }
+  if(htim->Instance == TIM4){
+    show_menu(current_menu);
+//    current_menu = show_menu(current_menu);
+    pulse_count = TIM1->CNT;
+    positions = pulse_count/4;
+
+
+    hd44780_clear();
+    hd44780_position(0, 1);
+    hd44780_printf("%s", menu_first_line);
+//    hd44780_printf("Count: %s  Debug: %s", name, menu_debug);
+    hd44780_position(1, 1);
+    hd44780_printf("%s", menu_second_line);
+//    hd44780_printf("Letter: %c", 65+positions);
   }
 }
 
@@ -211,6 +323,7 @@ int main(void)
   /* USER CODE BEGIN 2 */
 
   HAL_TIM_Encoder_Start(&htim1, TIM_CHANNEL_ALL);
+  HAL_TIM_Base_Start_IT(&htim4);
   hd44780_init(GPIOA, GPIO_PIN_1, GPIO_PIN_2, GPIO_PIN_3, GPIO_PIN_4, GPIO_PIN_5, GPIO_PIN_6, GPIO_PIN_7, HD44780_LINES_2, HD44780_FONT_5x8);
   hd44780_position(0, 1);
   hd44780_print("Hello World! ");
@@ -241,19 +354,6 @@ int main(void)
       usb_received = 0;
     }
 
-    pulse_count = TIM1->CNT;
-    positions = pulse_count/4;
-    hd44780_clear();
-    hd44780_position(1, 1);
-    hd44780_printf("Count: %s", name);
-    hd44780_position(0, 1);
-    int character = positions+65+(shift*32);
-    hd44780_printf("Letter: %c %c %c >%c< %c %c %c", character-3, character-2, character-1, character, character+1, character+2, character+3);
-//    hd44780_printf("Letter: %c", 65+positions);
-    for (int i = 0; i < 1000000; ++i) { //change to timers
-
-
-    }
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
@@ -411,7 +511,7 @@ static void MX_TIM4_Init(void)
 
   /* USER CODE END TIM4_Init 0 */
 
-  TIM_Encoder_InitTypeDef sConfig = {0};
+  TIM_ClockConfigTypeDef sClockSourceConfig = {0};
   TIM_MasterConfigTypeDef sMasterConfig = {0};
 
   /* USER CODE BEGIN TIM4_Init 1 */
@@ -420,18 +520,14 @@ static void MX_TIM4_Init(void)
   htim4.Instance = TIM4;
   htim4.Init.Prescaler = 7199;
   htim4.Init.CounterMode = TIM_COUNTERMODE_UP;
-  htim4.Init.Period = 199;
+  htim4.Init.Period = 999;
   htim4.Init.ClockDivision = TIM_CLOCKDIVISION_DIV1;
-  sConfig.EncoderMode = TIM_ENCODERMODE_TI1;
-  sConfig.IC1Polarity = TIM_ICPOLARITY_RISING;
-  sConfig.IC1Selection = TIM_ICSELECTION_DIRECTTI;
-  sConfig.IC1Prescaler = TIM_ICPSC_DIV1;
-  sConfig.IC1Filter = 0;
-  sConfig.IC2Polarity = TIM_ICPOLARITY_RISING;
-  sConfig.IC2Selection = TIM_ICSELECTION_DIRECTTI;
-  sConfig.IC2Prescaler = TIM_ICPSC_DIV1;
-  sConfig.IC2Filter = 0;
-  if (HAL_TIM_Encoder_Init(&htim4, &sConfig) != HAL_OK)
+  if (HAL_TIM_Base_Init(&htim4) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  sClockSourceConfig.ClockSource = TIM_CLOCKSOURCE_INTERNAL;
+  if (HAL_TIM_ConfigClockSource(&htim4, &sClockSourceConfig) != HAL_OK)
   {
     Error_Handler();
   }
@@ -494,7 +590,6 @@ static void MX_GPIO_Init(void)
   __HAL_RCC_GPIOH_CLK_ENABLE();
   __HAL_RCC_GPIOA_CLK_ENABLE();
   __HAL_RCC_GPIOD_CLK_ENABLE();
-  __HAL_RCC_GPIOB_CLK_ENABLE();
 
   /*Configure GPIO pin Output Level */
   HAL_GPIO_WritePin(GPIOA, GPIO_PIN_1|GPIO_PIN_2|GPIO_PIN_3|GPIO_PIN_4 
