@@ -73,20 +73,26 @@ TIM_HandleTypeDef htim4;
 UART_HandleTypeDef huart3;
 
 /* USER CODE BEGIN PV */
-volatile int pulse_count;
-volatile int positions;
+volatile uint8_t pulse_count;
+volatile uint8_t positions;
 char name[48];
 volatile int name_pos = 0;
-int character = 0;
-int shift = 0;
-int back = 0;
+uint8_t character[1] = {0};
+uint8_t shift = 0;
+uint8_t back = 0;
 const char * menu_debug = "";
 
-const char * menu_first_line = "";
+//const char * menu_first_line = "";
 
-const char * menu_second_line = "";
+//const char * menu_second_line = "";
+
+char menu_first_line[48];
+char menu_second_line[48];
+char *test_char;
 
 volatile int enter_pressed = 0;
+volatile int confirm_pressed = 0;
+volatile int back_pressed = 0;
 
 extern const char * server_ip;
 
@@ -94,6 +100,11 @@ extern const char * server_port;
 
 extern const char * wifi_name;
 extern const char * wifi_password;
+
+char temp1[50];
+char temp2[50];
+char temp3[50];
+char temp4[50];
 
 extern uint8_t packet_header[10];
 extern uint8_t packet_body[4096];
@@ -113,8 +124,17 @@ typedef enum{
     MENU_START,
     MENU_DEFAULT,
     MENU_CUSTOM,
-    MENU_CUSTOM_SERVER_IP
+    MENU_CUSTOM_SERVER,
+    MENU_CUSTOM_WIFI
 } menu;
+
+typedef enum{
+    PARAM_IP,
+    PARAM_PORT,
+    PARAM_NAME,
+    PARAM_PASSWORD
+} esp_params;
+esp_param = PARAM_IP;
 menu current_menu = MENU_START;
 /* USER CODE END PV */
 
@@ -127,23 +147,47 @@ static void MX_TIM2_Init(void);
 static void MX_TIM4_Init(void);
 /* USER CODE BEGIN PFP */
 
+int button_enter(){
+  if(enter_pressed){
+    enter_pressed = 0;
+    return 1;
+  }
+  else{
+    return 0;
+  }
+}
+
+int button_confirm(){\
+  if(confirm_pressed){
+    confirm_pressed = 0;
+    return 1;
+  }
+  else{
+    return 0;
+  }
+}
+
+void temp_confirm();
+
 menu show_menu(current){
   switch (current_menu) {
     case MENU_START:
       switch (positions % 2) {
         case 0:
-          menu_first_line = ">Default";
-          menu_second_line = " Custom";
-          if (enter_pressed == 1) {
-            enter_pressed = 0;
+            strcpy(menu_first_line, ">Default");
+            strcpy(menu_second_line, " Custom");
+//          menu_first_line = ">Default";
+//          menu_second_line = " Custom";
+          if (button_enter()) {
             current_menu = MENU_DEFAULT;
           }
         break;
         case 1:
-          menu_first_line = " Default";
-          menu_second_line = ">Custom";
-          if (enter_pressed == 1) {
-            enter_pressed = 0;
+            strcpy(menu_first_line, " Default");
+            strcpy(menu_second_line, ">Custom");
+//          menu_first_line = " Default";
+//          menu_second_line = ">Custom";
+          if (button_enter()) {
             current_menu = MENU_CUSTOM;
           }
         break;
@@ -151,57 +195,158 @@ menu show_menu(current){
       }
     break;
     case MENU_DEFAULT:
-      menu_first_line = "Connecting using defaults";
+//      menu_first_line = "Connecting using defaults";
     break;
     case MENU_CUSTOM:
       switch (positions % 4) {
         case 0:
-          menu_first_line = ">Server IP";
-          menu_second_line = " Server port";
-          if (enter_pressed == 1) {
-            enter_pressed = 0;
-            current_menu = MENU_CUSTOM_SERVER_IP;
+            strcpy(menu_first_line, ">Server IP: ");
+            strcat(menu_first_line, server_ip);
+            strcpy(menu_second_line, " Server Port: ");
+              strcat(menu_second_line, server_port);
+//          menu_first_line = ">Server IP";
+//          menu_second_line = " Server port";
+          if (button_enter()) {
+            esp_param = PARAM_IP;
+            current_menu = MENU_CUSTOM_SERVER;
+
+          }
+          else if(button_confirm()){
+            temp_confirm();
+            current_menu = MENU_START;
           }
           break;
         case 1:
-          menu_first_line = ">Server port";
-          menu_second_line = " WiFi Name";
-          if (enter_pressed == 1) {
-            enter_pressed = 0;
-            return MENU_CUSTOM;
+          strcpy(menu_first_line, " Server IP: ");
+              strcat(menu_first_line, server_ip);
+              strcpy(menu_second_line, ">Server Port: ");
+              strcat(menu_second_line, server_port);
+//          menu_first_line = ">Server port";
+//          menu_second_line = " WiFi Name";
+          if (button_enter()) {
+            esp_param = PARAM_PORT;
+            current_menu = MENU_CUSTOM_SERVER;
+          }
+          else if(button_confirm()){
+            temp_confirm();
+            current_menu = MENU_START;
           }
           break;
         case 2:
-          menu_first_line = ">WiFi Name";
-          menu_second_line = " WiFi Password";
-          if (enter_pressed == 1) {
-            enter_pressed = 0;
-            return MENU_CUSTOM;
+            strcpy(menu_first_line, ">WiFi Name: ");
+            strcat(menu_first_line, wifi_name);
+            strcpy(menu_second_line, " WiFi Password: ");
+            strcat(menu_second_line, wifi_password);
+//          menu_first_line = ">WiFi Name";
+//          menu_second_line = " WiFi Password";
+          if (button_enter()) {
+            esp_param = PARAM_NAME;
+            current_menu = MENU_CUSTOM_WIFI;
+          }
+          else if(button_confirm()){
+            temp_confirm();
+            current_menu = MENU_START;
           }
           break;
         case 3:
-          menu_first_line = " WiFi Name";
-          menu_second_line = ">WiFi Password";
-          if (enter_pressed == 1) {
-            enter_pressed = 0;
-            return MENU_CUSTOM;
+            strcpy(menu_first_line, " WiFi Name: ");
+              strcat(menu_first_line, wifi_name);
+            strcpy(menu_second_line, ">WiFi Password: ");
+              strcat(menu_second_line, wifi_password);
+//          menu_first_line = " WiFi Name";
+//          menu_second_line = ">WiFi Password";
+          if (button_enter()) {
+            esp_param = PARAM_PASSWORD;
+            current_menu = MENU_CUSTOM_WIFI;
+          }
+          else if(button_confirm()){
+            temp_confirm();
+            current_menu = MENU_START;
           }
           break;
         default:break;
       }
     break;
-    case MENU_CUSTOM_SERVER_IP:
-      character = positions+65+(shift*32);
-      hd44780_position(0, 1);
-    hd44780_printf("Letter: %s", character);
-      menu_second_line = name;
-      if(enter_pressed == 1){
-        enter_pressed = 0;
-        name[name_pos] = (char)character;
+    case MENU_CUSTOM_SERVER:
+      character[0] = (uint8_t) (positions%10 + 48);
+//          character[0] = (uint8_t) (positions + 65 + (shift * 32));
+      strcpy(menu_first_line, "Number: ");
+//          strcat(menu_first_line, (const char *) (character[0]-2));
+//          strcat(menu_first_line, " ");
+//          strcat(menu_first_line, (const char *) (character[0]-1));
+          strcat(menu_first_line, ">");
+          strcat(menu_first_line, (const char *) character);
+          strcat(menu_first_line, "<");
+//          strcat(menu_first_line, (const char *) (character[0]+1));
+//          strcat(menu_first_line, " ");
+//          strcat(menu_first_line, (const char *) (character[0]+2));
+          strcat(menu_first_line, " ");
+      strcpy(menu_second_line, name);
+      if(button_enter()){
+        name[name_pos] = character[0];
         name_pos++;
       }
+      if(shift == 1){
+        shift = 0;
+        name[name_pos] = '.';
+        name_pos++;
+      }
+      if(back_pressed == 1){
+        back_pressed = 0;
+        name_pos--;
+        name[name_pos] = ' ';
+      }
+      if(button_confirm()){
+        switch(esp_param){
+            case PARAM_IP:
+              strcpy(temp1,name);
+              server_ip = temp1;
+              break;
+          case PARAM_PORT:
+                strcpy(temp2, name);
+                server_port = temp2;
+                break;
+        }
+        current_menu = MENU_CUSTOM;
+      }
+      shift = 0;
     break;
-
+    case MENU_CUSTOM_WIFI:
+      character[0] = (uint8_t) ((positions + 65 + shift*32));
+          strcpy(menu_first_line, "Letter: ");
+          strcat(menu_first_line, ">");
+          strcat(menu_first_line, (const char *) character);
+          strcat(menu_first_line, "<");
+          strcpy(menu_second_line, name);
+          if(button_enter()){
+            name[name_pos] = character[0];
+            name_pos++;
+          }
+          if(shift == 1){
+            shift = 0;
+            name[name_pos] = '.';
+            name_pos++;
+          }
+          if(back_pressed == 1){
+            back_pressed = 0;
+            name_pos--;
+            name[name_pos] = ' ';
+          }
+          if(button_confirm()){
+            switch(esp_param){
+              case PARAM_NAME:
+                    strcpy(temp3, name);
+                    wifi_name = temp3;
+                    break;
+              case PARAM_PASSWORD:
+                    strcpy(temp4, name);
+                    wifi_password = temp4;
+                    break;
+            }
+            current_menu = MENU_CUSTOM;
+          }
+          shift = 0;
+          break;
   }
 }
 
@@ -251,8 +396,10 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim){
         shift = !shift;
     }
     else if (HAL_GPIO_ReadPin(GPIOD, GPIO_PIN_2) == GPIO_PIN_SET) {
-      back = !back;
-      current_menu = MENU_START;
+        back_pressed = 1;
+    }
+    else if (HAL_GPIO_ReadPin(GPIOD, GPIO_PIN_3) == GPIO_PIN_SET) {
+       confirm_pressed = 1;
     }
     HAL_GPIO_TogglePin(GPIOD, GPIO_PIN_15);
     HAL_TIM_Base_Stop(&htim2);
@@ -353,6 +500,8 @@ int main(void)
       HAL_UART_Transmit_IT(&huart3, usb_data, sizeof(usb_data));
       usb_received = 0;
     }
+
+    if(name_pos < 0) { name_pos = 0; }
 
     /* USER CODE END WHILE */
 
