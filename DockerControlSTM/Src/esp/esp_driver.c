@@ -5,11 +5,11 @@
 #include "utils.h"
 #include <stdlib.h>
 
-const char * server_ip = DEFAULT_SERVER_IP;
-const char * server_port = DEFAULT_SERVER_PORT;
+const char server_ip[15] = DEFAULT_SERVER_IP;
+const char server_port[5] = DEFAULT_SERVER_PORT;
 
-const char * wifi_name = DEFAULT_WIFI_NAME;
-const char * wifi_password = DEFAULT_WIFI_PASSWORD;
+const char wifi_name[100] = DEFAULT_WIFI_NAME;
+const char wifi_password[100] = DEFAULT_WIFI_PASSWORD;
 
 uint8_t packet_header[10];
 uint8_t packet_body[4096];
