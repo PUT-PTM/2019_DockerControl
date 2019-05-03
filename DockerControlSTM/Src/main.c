@@ -69,18 +69,18 @@ UART_HandleTypeDef huart3;
 
 /* USER CODE BEGIN PV */
 
-extern const char * server_ip;
-extern const char * server_port;
+extern char server_ip;
+extern char server_port;
 
-extern const char * wifi_name;
-extern const char * wifi_password;
+extern char wifi_name;
+extern char wifi_password;
 
 extern uint8_t packet_header[10];
 extern uint8_t packet_body[4096];
 
 extern enum esp_connection_state connection_state;
 
-extern enum esp_cmd cmd;
+extern enum DC_COMMAND_ENUM cmd;
 extern uint8_t cmd_received;
 
 uint8_t uart_receive[5];
@@ -97,11 +97,10 @@ static void MX_GPIO_Init(void);
 static void MX_USART3_UART_Init(void);
 /* USER CODE BEGIN PFP */
 
-void start_esp() {
+void start_dc() {
     HAL_UART_Receive_IT(&huart3, uart_receive, uart_size);
 
-    esp_init(&huart3);
-    esp_passthrough(&huart3);
+    dc_start_session(&huart3);
 
     HAL_UART_AbortReceive_IT(&huart3);
     HAL_UART_Receive_IT(&huart3, packet_header, sizeof(packet_header));
@@ -172,7 +171,7 @@ int main(void)
   HAL_GPIO_WritePin(GPIOD, GPIO_PIN_12, GPIO_PIN_SET);
   util_log("DockerControl start");
 
-  start_esp();
+  start_dc();
 
   /* USER CODE END 2 */
 
@@ -188,6 +187,10 @@ int main(void)
     {
         if (cmd_received == 1) {
             util_log("got cmd");
+
+            dc_new_cmd(packet_header, packet_body);
+            util_log(DC_COMMAND_STRING[cmd]);
+
             cmd_received = 0;
         }
         if(usb_received == 1){

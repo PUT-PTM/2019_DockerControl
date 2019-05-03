@@ -5,13 +5,13 @@
 
 enum esp_connection_state { IDLE, WAIT_HEADER, WAIT_BODY };
 
-enum esp_cmd { ACK, CALL, CACT };
-
 void esp_wait(UART_HandleTypeDef * huart);
 
 void esp_init(UART_HandleTypeDef * huart);
 
-void esp_send_command(UART_HandleTypeDef * huart, const char * command);
+void esp_send_command(UART_HandleTypeDef * huart, uint8_t * command, uint16_t size);
+
+void esp_send_def_command(UART_HandleTypeDef * huart, const char * command);
 
 void esp_test(UART_HandleTypeDef * huart);
 
