@@ -9,10 +9,10 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.io.readPacket
 import kotlinx.coroutines.io.writeFully
 import kotlinx.coroutines.launch
-import pl.poznan.put.cie.ptm.dockercontrol.service.commands.Body
+import pl.poznan.put.cie.ptm.dockercontrol.service.server.packet.Body
 import pl.poznan.put.cie.ptm.dockercontrol.service.commands.CMD
 import pl.poznan.put.cie.ptm.dockercontrol.service.commands.Commands
-import pl.poznan.put.cie.ptm.dockercontrol.service.commands.Header
+import pl.poznan.put.cie.ptm.dockercontrol.service.server.packet.Header
 import pl.poznan.put.cie.ptm.dockercontrol.service.utils.Logger
 
 class Session (

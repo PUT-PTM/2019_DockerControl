@@ -1,4 +1,6 @@
-package pl.poznan.put.cie.ptm.dockercontrol.service.commands
+package pl.poznan.put.cie.ptm.dockercontrol.service.server.packet
+
+import pl.poznan.put.cie.ptm.dockercontrol.service.commands.CMD
 
 data class Body (
     val cmd: CMD,

@@ -60,7 +60,7 @@ class DockerConnector {
         else  TODO("handle $operation errors")
     }
 
-    fun deleteContainer(id: String): Boolean {
+    fun removeContainer(id: String): Boolean {
         val response = runBlocking { http.delete("containers/$id") }
         return if (response.status == HttpStatusCode.NoContent) true
         else  TODO("handle delete errors")
