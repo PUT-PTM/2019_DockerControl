@@ -4,7 +4,7 @@
 // define default connection parameters here
 
 #define DEFAULT_WIFI_NAME "wifi"
-#define DEFAULT_WIFI_PASSWORD "wifi_pass#"
+#define DEFAULT_WIFI_PASSWORD "wifi_pass"
 
 #define DEFAULT_SERVER_IP "ip"
 #define DEFAULT_SERVER_PORT "port"
