@@ -3,7 +3,9 @@
 
 #include "dc_commands.h"
 
-void dc_resolve_cmd(const uint8_t * body);
+void dc_new_cmd(const uint8_t * packet_header, const uint8_t * packet_body);
+void dc_resolve_cmd(const uint8_t * packet_body);
+void dc_apply_cmd(const uint8_t * packet_header, const uint8_t * packet_body);
 
 void dc_make_header();
 void dc_make_body();

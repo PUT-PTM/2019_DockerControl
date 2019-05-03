@@ -188,7 +188,7 @@ int main(void)
         if (cmd_received == 1) {
             util_log("got cmd");
 
-            dc_resolve_cmd(packet_body);
+            dc_new_cmd(packet_header, packet_body);
             util_log(DC_COMMAND_STRING[cmd]);
 
             cmd_received = 0;

@@ -31,4 +31,6 @@ static const char *DC_COMMAND_STRING[] = {
     FOREACH_DC_COMMAND(GENERATE_STRING)
 };
 
+void dc_cmd_ready(const uint8_t * packet_header);
+
 #endif //DOCKERCONTROLSTM_DC_COMMANDS_H
