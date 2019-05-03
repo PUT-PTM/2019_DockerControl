@@ -5,6 +5,7 @@ import io.ktor.network.sockets.openReadChannel
 import io.ktor.network.sockets.openWriteChannel
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.io.readPacket
 import kotlinx.coroutines.io.writeFully
 import kotlinx.coroutines.launch
@@ -86,7 +87,8 @@ class Session (
 
     private suspend fun send(packet: Packet) {
         val toSend = packet.make()
-        Logger.log(toSend)
+        Logger.log("sending: $toSend", this)
+        delay(150)
         output.writeFully(toSend.toByteArray())
     }
 
