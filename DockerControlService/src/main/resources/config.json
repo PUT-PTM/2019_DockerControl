@@ -1,6 +1,10 @@
 {
   "server": {
-    "ip": "192.168.1.253",
+    "ip": "server-ip",
     "port": 1500
+  },
+  "docker": {
+    "host": "docker-host",
+    "port": 2375
   }
 }
