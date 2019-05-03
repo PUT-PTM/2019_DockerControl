@@ -3,10 +3,10 @@
 
 // define default connection parameters here
 
-#define DEFAULT_WIFI_NAME "R"
-#define DEFAULT_WIFI_PASSWORD "Rigle_Da_3est#"
+#define DEFAULT_WIFI_NAME "wifi"
+#define DEFAULT_WIFI_PASSWORD "wifi_pass#"
 
-#define DEFAULT_SERVER_IP "192.168.1.253"
-#define DEFAULT_SERVER_PORT "1500"
+#define DEFAULT_SERVER_IP "ip"
+#define DEFAULT_SERVER_PORT "port"
 
 #endif //DOCKERCONTROLSTM_ESP_CONNECTION_DATA_H
