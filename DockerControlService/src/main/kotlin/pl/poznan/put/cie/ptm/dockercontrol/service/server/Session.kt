@@ -88,7 +88,7 @@ class Session (
     private suspend fun send(packet: Packet) {
         val toSend = packet.make()
         Logger.log("sending: $toSend", this)
-        delay(150)
+        delay(250)
         output.writeFully(toSend.toByteArray())
     }
 
