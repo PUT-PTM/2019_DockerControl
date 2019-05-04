@@ -1,8 +1,6 @@
-package pl.poznan.put.cie.ptm.dockercontrol.service.server
+package pl.poznan.put.cie.ptm.dockercontrol.service.server.packet
 
-import pl.poznan.put.cie.ptm.dockercontrol.service.server.packet.Body
 import pl.poznan.put.cie.ptm.dockercontrol.service.commands.CMD
-import pl.poznan.put.cie.ptm.dockercontrol.service.server.packet.Header
 
 data class Packet(
     val sessionId: Int,
@@ -22,7 +20,9 @@ data class Packet(
 
         fun decodeBody(rawBody: String) = Body(
             rawBody.substringBefore(PACKET_PART_DELIMITER),
-            rawBody.substringAfter(PACKET_PART_DELIMITER).substringBefore(PACKET_END)
+            rawBody.substringAfter(PACKET_PART_DELIMITER).substringBefore(
+                PACKET_END
+            )
         )
 
         fun decodeHeader(rawHeader: String) = Header(
