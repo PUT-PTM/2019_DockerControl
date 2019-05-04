@@ -14,15 +14,17 @@ class DockerControlService {
         return ""
     }
 
-    fun ack(data: String, session: Session): String = "ACKN"
+    fun ack(data: String, session: Session): String = ""
 
     // containers
     fun getAllContainers(data: String, session: Session): String {
-        return connector.getAllContainers().toString()
+        val containers = connector.getAllContainers()
+        return DataSerializer.toContainerArray(containers)
     }
 
     fun getActiveContainers(data: String, session: Session): String {
-        return connector.getRunningContainers().toString()
+        val containers = connector.getRunningContainers()
+        return DataSerializer.toContainerArray(containers)
     }
 
     fun getContainerStats(data: String, session: Session): String = "stats of $data container"
@@ -52,10 +54,14 @@ class DockerControlService {
         return "${if (created) 1 else 0}"
     }
 
+
+    // images
     fun getImages(data: String, session: Session): String {
-        return connector.getImages().toString()
+        val images =  connector.getImages()
+        return DataSerializer.toImageArray(images)
     }
 
+    // system
     fun getStats(data: String, session: Session): String {
         return "${connector.getStats()}-${connector.getVersion()}"
     }

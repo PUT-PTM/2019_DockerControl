@@ -5,7 +5,7 @@ enum class CMD {
     READ, ACKN, ERRR,
 
     // containers
-    CALL, CATC, CSTS, CSTR, CSTP, CRST, CRMV, CCRT,
+    CALL, CACT, CSTS, CSTR, CSTP, CRST, CRMV, CCRT,
 
     // images
     IALL,

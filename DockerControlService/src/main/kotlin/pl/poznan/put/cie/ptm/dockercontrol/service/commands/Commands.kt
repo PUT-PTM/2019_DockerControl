@@ -14,7 +14,7 @@ object Commands {
 
         // containers
         CMD.CALL to service::getAllContainers,
-        CMD.CATC to service::getActiveContainers,
+        CMD.CACT to service::getActiveContainers,
         CMD.CSTS to service::getContainerStats,
         CMD.CSTR to service::startContainer,
         CMD.CSTP to service::stopContainer,
