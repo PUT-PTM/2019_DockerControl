@@ -12,9 +12,11 @@ tba
 
 ### communication
 #### protocol
-**packet:** `$<sessionId:uint8[3]>!<bodySize:uint12[4]!<cmd:char[n]>!<data?:char[n]>#`
+**packet:** `$<sessionId:uint8[3]>!<bodySize:uint12[4]!<cmd:char[4]>!<data?:char[n]>#`
 
-header: `$<sessionId:uint8[3]>!<bodySize:uint12[4]!` body: `<cmd:char[n]>!<data?:char[n]>#`
+max length: 5006, header: 10 (always), body: 4096 (max)
+
+header: `$<sessionId:uint8[3]>!<bodySize:uint12[4]!` body: `<cmd:char[4]>!<data?:char[n]>#`
 
 #### data representation
 **container:** `id:char[64], name:char[50], image:char[50], state:char[10], time:char[10]`
@@ -27,7 +29,7 @@ header: `$<sessionId:uint8[3]>!<bodySize:uint12[4]!` body: `<cmd:char[n]>!<data?
 | READ | - | packet with assigned session id and no data | Signals that STM is ready |
 | ACKN | - | - | Acknowledge or ping |
 | CALL | - | [array of containers] | All containers |
-| CATC | - | [array of containers] | Active containers |
+| CACT | - | [array of containers] | Active containers |
 | CSTS | [id] | [container] | Stats of container |
 | CSTR | [id] | [success],[id] | Start container |
 | CSTP | [id] | [success],[id] | Stop container |
