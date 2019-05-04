@@ -61,7 +61,7 @@ class Session (
     private suspend fun processPacket(packet: String): Packet = processHeader(packet)
 
     private suspend fun processHeader(rawHeader: String): Packet {
-        Logger.log("header: $rawHeader", this)
+        Logger.log("received header: $rawHeader", this)
         return if (Header.isHeader(rawHeader)) {
             val header = Packet.decodeHeader(rawHeader)
 
@@ -78,7 +78,7 @@ class Session (
     }
 
     private fun processBody(rawBody: String): Packet {
-        Logger.log("body: $rawBody", this)
+        Logger.log("received body: $rawBody", this)
         return if (Body.isBody(rawBody)) {
             val body = Packet.decodeBody(rawBody)
             val response = Commands.process(body.cmd, body.data, this)
