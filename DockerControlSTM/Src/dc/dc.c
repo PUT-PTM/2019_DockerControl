@@ -38,17 +38,15 @@ void dc_apply_cmd(const uint8_t * const packet_header, const uint8_t * const pac
         case CALL:break;
         case CATC:break;
         case CSTS:break;
+        case CSTR:break;
         case CSTP:break;
         case CRST:break;
         case CRMV:break;
-        case CMKI:break;
+        case CCRT:break;
         case IALL:break;
         case SSTS:break;
         case ALRT:break;
         case ERRR:break;
-        default:
-            util_log("unknown cmd");
-            break;
     }
 }
 
