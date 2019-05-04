@@ -69,23 +69,32 @@ UART_HandleTypeDef huart3;
 
 /* USER CODE BEGIN PV */
 
+// system data
 extern char server_ip;
 extern char server_port;
-
 extern char wifi_name;
 extern char wifi_password;
 
-extern uint8_t packet_header[10];
-extern uint8_t packet_body[4096];
-
+// esp driver
+extern uint8_t packet_received;
+extern uint8_t received_packet_header[10];
+extern uint8_t received_packet_body[4096];
 extern enum esp_connection_state connection_state;
 
+// dc
 extern enum DC_COMMAND_ENUM cmd;
-extern uint8_t cmd_received;
+extern uint8_t new_containers;
+extern uint8_t containers_size;
+extern struct container containers[20];
+extern uint8_t new_images;
+extern uint8_t images_size;
+extern uint8_t images[20][50];
 
+// uart
 uint8_t uart_receive[5];
 const uint16_t uart_size = 5;
 
+// usb
 uint8_t usb_data[40];
 uint8_t usb_received = 0;
 
@@ -103,7 +112,7 @@ void start_dc() {
     dc_start_session(&huart3);
 
     HAL_UART_AbortReceive_IT(&huart3);
-    HAL_UART_Receive_IT(&huart3, packet_header, sizeof(packet_header));
+    HAL_UART_Receive_IT(&huart3, received_packet_header, sizeof(received_packet_header));
 }
 
 void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart) {
@@ -113,13 +122,13 @@ void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart) {
         switch (connection_state) {
             case WAIT_HEADER:
             {
-                const uint16_t body_size = esp_process_header(huart);
-                HAL_UART_Receive_IT(huart, packet_body, body_size);
+                const uint16_t body_size = esp_process_header();
+                HAL_UART_Receive_IT(huart, received_packet_body, body_size);
             }
                 break;
             case WAIT_BODY:
                 esp_process_body(huart);
-                HAL_UART_Receive_IT(huart, packet_header, sizeof(packet_header));
+                HAL_UART_Receive_IT(huart, received_packet_header, sizeof(received_packet_header));
                 break;
             case IDLE:
                 CDC_Transmit_FS(uart_receive, uart_size);
@@ -185,13 +194,13 @@ int main(void)
     util_log("endless loop");
     while (1)
     {
-        if (cmd_received == 1) {
-            util_log("got cmd");
+        if (packet_received == 1) {
+            util_log("got packet");
 
-            dc_new_cmd(packet_header, packet_body);
+            dc_new_cmd(received_packet_header, received_packet_body);
             util_log(DC_COMMAND_STRING[cmd]);
 
-            cmd_received = 0;
+            packet_received = 0;
         }
         if(usb_received == 1){
             HAL_UART_Transmit_IT(&huart3, usb_data, sizeof(usb_data));
