@@ -11,10 +11,11 @@
         DC_COMMAND(CALL) \
         DC_COMMAND(CATC) \
         DC_COMMAND(CSTS) \
+        DC_COMMAND(CSTR) \
         DC_COMMAND(CSTP) \
         DC_COMMAND(CRST) \
         DC_COMMAND(CRMV) \
-        DC_COMMAND(CMKI) \
+        DC_COMMAND(CCRT) \
         DC_COMMAND(IALL) \
         DC_COMMAND(SSTS) \
         DC_COMMAND(ALRT) \
