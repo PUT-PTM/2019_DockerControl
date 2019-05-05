@@ -9,10 +9,11 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.io.readPacket
 import kotlinx.coroutines.io.writeFully
 import kotlinx.coroutines.launch
-import pl.poznan.put.cie.ptm.dockercontrol.service.commands.Body
+import pl.poznan.put.cie.ptm.dockercontrol.service.server.packet.Body
 import pl.poznan.put.cie.ptm.dockercontrol.service.commands.CMD
 import pl.poznan.put.cie.ptm.dockercontrol.service.commands.Commands
-import pl.poznan.put.cie.ptm.dockercontrol.service.commands.Header
+import pl.poznan.put.cie.ptm.dockercontrol.service.server.packet.Header
+import pl.poznan.put.cie.ptm.dockercontrol.service.server.packet.Packet
 import pl.poznan.put.cie.ptm.dockercontrol.service.utils.Logger
 
 class Session (
@@ -60,7 +61,7 @@ class Session (
     private suspend fun processPacket(packet: String): Packet = processHeader(packet)
 
     private suspend fun processHeader(rawHeader: String): Packet {
-        Logger.log("header: $rawHeader", this)
+        Logger.log("received header: $rawHeader", this)
         return if (Header.isHeader(rawHeader)) {
             val header = Packet.decodeHeader(rawHeader)
 
@@ -77,7 +78,7 @@ class Session (
     }
 
     private fun processBody(rawBody: String): Packet {
-        Logger.log("body: $rawBody", this)
+        Logger.log("received body: $rawBody", this)
         return if (Body.isBody(rawBody)) {
             val body = Packet.decodeBody(rawBody)
             val response = Commands.process(body.cmd, body.data, this)

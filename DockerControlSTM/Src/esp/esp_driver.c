@@ -11,12 +11,12 @@ char server_port[5] = DEFAULT_SERVER_PORT;
 char wifi_name[100] = DEFAULT_WIFI_NAME;
 char wifi_password[100] = DEFAULT_WIFI_PASSWORD;
 
-uint8_t packet_header[10];
-uint8_t packet_body[4096];
+uint8_t received_packet_header[10];
+uint8_t received_packet_body[4096];
 
 enum esp_connection_state connection_state = IDLE;
 
-uint8_t cmd_received = 0;
+uint8_t packet_received = 0;
 
 void esp_wait(UART_HandleTypeDef * const huart) {
     util_log("waiting for esp...");
@@ -113,16 +113,16 @@ void esp_passthrough(UART_HandleTypeDef * const huart) {
     connection_state = WAIT_HEADER;
 }
 
-const uint16_t esp_process_header(UART_HandleTypeDef * const huart) {
+const uint16_t esp_process_header() {
     char body_size_string[4];
-    memcpy(body_size_string, &packet_header[5], 4);
+    memcpy(body_size_string, &received_packet_header[5], 4);
     const uint16_t body_size = (uint16_t) atoi(body_size_string);
     connection_state = WAIT_BODY;
     return body_size;
 }
 
-void esp_process_body(UART_HandleTypeDef * const huart) {
-    cmd_received = 1;
+void esp_process_body() {
+    packet_received = 1;
     connection_state = WAIT_HEADER;
 }
 

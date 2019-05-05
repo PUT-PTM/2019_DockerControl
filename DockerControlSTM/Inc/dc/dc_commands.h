@@ -5,16 +5,21 @@
 #define PACKET_DELIMITER '!'
 #define PACKET_END '#'
 
+#define PACKET_DATA_DELIMITER ','
+#define PACKET_DATA_ARRAY_DELIMITER ';'
+#define PACKET_BODY_DATA_START 5
+
 #define FOREACH_DC_COMMAND(DC_COMMAND) \
         DC_COMMAND(READ) \
         DC_COMMAND(ACKN) \
         DC_COMMAND(CALL) \
-        DC_COMMAND(CATC) \
+        DC_COMMAND(CACT) \
         DC_COMMAND(CSTS) \
+        DC_COMMAND(CSTR) \
         DC_COMMAND(CSTP) \
         DC_COMMAND(CRST) \
         DC_COMMAND(CRMV) \
-        DC_COMMAND(CMKI) \
+        DC_COMMAND(CCRT) \
         DC_COMMAND(IALL) \
         DC_COMMAND(SSTS) \
         DC_COMMAND(ALRT) \
@@ -30,7 +35,5 @@ enum DC_COMMAND_ENUM {
 static const char *DC_COMMAND_STRING[] = {
     FOREACH_DC_COMMAND(GENERATE_STRING)
 };
-
-void dc_cmd_ready(const uint8_t * packet_header);
 
 #endif //DOCKERCONTROLSTM_DC_COMMANDS_H

@@ -17,9 +17,9 @@ void esp_test(UART_HandleTypeDef * huart);
 
 void esp_passthrough(UART_HandleTypeDef * huart);
 
-const uint16_t esp_process_header(UART_HandleTypeDef * huart);
+const uint16_t esp_process_header();
 
-void esp_process_body(UART_HandleTypeDef * huart);
+void esp_process_body();
 
 void esp_clear_uart_buff(UART_HandleTypeDef * huart);
 

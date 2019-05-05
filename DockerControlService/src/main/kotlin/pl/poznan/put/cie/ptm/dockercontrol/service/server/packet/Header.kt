@@ -1,4 +1,4 @@
-package pl.poznan.put.cie.ptm.dockercontrol.service.commands
+package pl.poznan.put.cie.ptm.dockercontrol.service.server.packet
 
 data class Header (
     val sessionId: Int,
