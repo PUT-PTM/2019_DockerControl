@@ -74,15 +74,15 @@ TIM_HandleTypeDef htim4;
 UART_HandleTypeDef huart3;
 
 /* USER CODE BEGIN PV */
-volatile uint8_t pulse_count;
-volatile uint8_t positions;
+
 char name[48];
 volatile int name_pos = 0;
 uint8_t character[1] = {0};
 bool shift = 0;
 uint8_t back = 0;
-const char * menu_debug = "";
-
+volatile uint8_t pulse_count;
+volatile uint8_t positions;
+bool menu_finished = false;
 //menu
 esp_param = PARAM_IP;
 int current_menu = MENU_START;
@@ -178,8 +178,6 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim){
   volatile TIM_TypeDef *temp = htim->Instance;
   if(htim->Instance == TIM2){
     if (HAL_GPIO_ReadPin(GPIOE, GPIO_PIN_5) == GPIO_PIN_SET) {
-//      name[name_pos] = (char)(65+positions);
-//      name_pos++;
         enter_pressed = 1;
     }
     else if (HAL_GPIO_ReadPin(GPIOD, GPIO_PIN_1) == GPIO_PIN_SET) {
@@ -193,21 +191,6 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim){
     }
     HAL_GPIO_TogglePin(GPIOD, GPIO_PIN_15);
     HAL_TIM_Base_Stop(&htim2);
-  }
-  if(htim->Instance == TIM4){
-    show_menu();
-//    current_menu = show_menu(current_menu);
-    pulse_count = TIM1->CNT;
-    positions = pulse_count/4;
-
-
-    hd44780_clear();
-    hd44780_position(0, 1);
-    hd44780_printf("%s", menu_first_line);
-//    hd44780_printf("Count: %s  Debug: %s", name, menu_debug);
-    hd44780_position(1, 1);
-    hd44780_printf("%s", menu_second_line);
-//    hd44780_printf("Letter: %c", 65+positions);
   }
 }
 
@@ -268,6 +251,8 @@ int main(void)
 
   HAL_GPIO_WritePin(GPIOD, GPIO_PIN_12, GPIO_PIN_SET);
   util_log("DockerControl start");
+
+  show_menu();
 
   start_dc();
 

@@ -14,12 +14,15 @@ extern uint8_t character[1];
 extern bool shift;
 extern uint8_t back;
 
+
+
 //buttons
 extern volatile int enter_pressed;
 extern volatile int confirm_pressed;
 extern volatile int back_pressed;
 
 //encoder
+extern volatile uint8_t pulse_count;
 extern volatile uint8_t positions;
 
 // system data
@@ -28,6 +31,8 @@ extern char server_port;
 extern char wifi_name;
 extern char wifi_password;
 
+//menu
+extern bool menu_finished;
 typedef enum{
     MENU_START,
     MENU_DEFAULT,
@@ -45,5 +50,8 @@ typedef enum{
 extern esp_param;
 extern current_menu;
 menu show_menu();
+
+void update_screen();
+void menu_text(char[], char[]);
 
 #endif
