@@ -58,6 +58,8 @@ extern "C" {
 
 #include <esp/esp_driver.h>
 #include <esp/esp_commands.h>
+#include <dc/dc.h>
+#include <dc/dc_commands.h>
 #include <utils.h>
 
 /* USER CODE END Includes */
@@ -82,7 +84,7 @@ void Error_Handler(void);
 
 /* USER CODE BEGIN EFP */
 
-void start_esp();
+void start_dc();
 
 /* USER CODE END EFP */
 

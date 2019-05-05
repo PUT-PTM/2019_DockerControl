@@ -12,5 +12,5 @@ object Logger {
         println("$time - $msg")
     }
 
-    fun log(msg: String, session: Session) = log("session:\t${session.id} - $msg")
+    fun log(msg: String, session: Session) = log("${session.id} - $msg")
 }

@@ -94,13 +94,16 @@ volatile int enter_pressed = 0;
 volatile int confirm_pressed = 0;
 volatile int back_pressed = 0;
 
-extern const char * server_ip;
+// system data
+extern char server_ip;
+extern char server_port;
+extern char wifi_name;
+extern char wifi_password;
 
-extern const char * server_port;
-
-extern const char * wifi_name;
-extern const char * wifi_password;
-
+// esp driver
+extern uint8_t packet_received;
+extern uint8_t received_packet_header[10];
+extern uint8_t received_packet_body[4096];
 char temp1[50];
 char temp2[50];
 char temp3[50];
@@ -111,12 +114,20 @@ extern uint8_t packet_body[4096];
 
 extern enum esp_connection_state connection_state;
 
-extern enum esp_cmd cmd;
-extern uint8_t cmd_received;
+// dc
+extern enum DC_COMMAND_ENUM cmd;
+extern uint8_t new_containers;
+extern uint8_t containers_size;
+extern struct container containers[20];
+extern uint8_t new_images;
+extern uint8_t images_size;
+extern uint8_t images[20][50];
 
+// uart
 uint8_t uart_receive[5];
 const uint16_t uart_size = 5;
 
+// usb
 uint8_t usb_data[40];
 uint8_t usb_received = 0;
 
@@ -350,14 +361,13 @@ menu show_menu(current){
   }
 }
 
-void start_esp() {
+void start_dc() {
     HAL_UART_Receive_IT(&huart3, uart_receive, uart_size);
 
-    esp_init(&huart3);
-    esp_passthrough(&huart3);
+    dc_start_session(&huart3);
 
     HAL_UART_AbortReceive_IT(&huart3);
-    HAL_UART_Receive_IT(&huart3, packet_header, sizeof(packet_header));
+    HAL_UART_Receive_IT(&huart3, received_packet_header, sizeof(received_packet_header));
 }
 
 void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart) {
@@ -367,13 +377,13 @@ void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart) {
         switch (connection_state) {
             case WAIT_HEADER:
             {
-                const uint16_t body_size = esp_process_header(huart);
-                HAL_UART_Receive_IT(huart, packet_body, body_size);
+                const uint16_t body_size = esp_process_header();
+                HAL_UART_Receive_IT(huart, received_packet_body, body_size);
             }
                 break;
             case WAIT_BODY:
                 esp_process_body(huart);
-                HAL_UART_Receive_IT(huart, packet_header, sizeof(packet_header));
+                HAL_UART_Receive_IT(huart, received_packet_header, sizeof(received_packet_header));
                 break;
             case IDLE:
                 CDC_Transmit_FS(uart_receive, uart_size);
@@ -479,7 +489,8 @@ int main(void)
   HAL_GPIO_WritePin(GPIOD, GPIO_PIN_12, GPIO_PIN_SET);
   util_log("DockerControl start");
 
-//  start_esp();
+  start_dc();
+
   /* USER CODE END 2 */
 
   /* Infinite loop */
@@ -489,17 +500,21 @@ int main(void)
 #pragma clang diagnostic push
 #pragma clang diagnostic ignored "-Wmissing-noreturn"
 
-  util_log("endless loop");
-  while (1)
-  {
-    if (cmd_received == 1) {
-      util_log("got cmd");
-      cmd_received = 0;
-    }
-    if(usb_received == 1){
-      HAL_UART_Transmit_IT(&huart3, usb_data, sizeof(usb_data));
-      usb_received = 0;
-    }
+    util_log("endless loop");
+    while (1)
+    {
+        if (packet_received == 1) {
+            util_log("got packet");
+
+            dc_new_cmd(received_packet_header, received_packet_body);
+            util_log(DC_COMMAND_STRING[cmd]);
+
+            packet_received = 0;
+        }
+        if(usb_received == 1){
+            HAL_UART_Transmit_IT(&huart3, usb_data, sizeof(usb_data));
+            usb_received = 0;
+        }
 
     if(name_pos < 0) { name_pos = 0; }
 
@@ -741,7 +756,7 @@ static void MX_GPIO_Init(void)
   __HAL_RCC_GPIOD_CLK_ENABLE();
 
   /*Configure GPIO pin Output Level */
-  HAL_GPIO_WritePin(GPIOA, GPIO_PIN_1|GPIO_PIN_2|GPIO_PIN_3|GPIO_PIN_4 
+  HAL_GPIO_WritePin(GPIOA, GPIO_PIN_1|GPIO_PIN_2|GPIO_PIN_3|GPIO_PIN_4
                           |GPIO_PIN_5|GPIO_PIN_6|GPIO_PIN_7, GPIO_PIN_RESET);
 
   /*Configure GPIO pin Output Level */
@@ -756,9 +771,9 @@ static void MX_GPIO_Init(void)
   GPIO_InitStruct.Pull = GPIO_PULLDOWN;
   HAL_GPIO_Init(GPIOE, &GPIO_InitStruct);
 
-  /*Configure GPIO pins : PA1 PA2 PA3 PA4 
+  /*Configure GPIO pins : PA1 PA2 PA3 PA4
                            PA5 PA6 PA7 */
-  GPIO_InitStruct.Pin = GPIO_PIN_1|GPIO_PIN_2|GPIO_PIN_3|GPIO_PIN_4 
+  GPIO_InitStruct.Pin = GPIO_PIN_1|GPIO_PIN_2|GPIO_PIN_3|GPIO_PIN_4
                           |GPIO_PIN_5|GPIO_PIN_6|GPIO_PIN_7;
   GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
   GPIO_InitStruct.Pull = GPIO_NOPULL;
