@@ -3,8 +3,10 @@
 
 #include <sched.h>
 #include <stdbool.h>
+#include<string.h>
+//#include "dc/dc.h"
 
-
+//screen
 extern char menu_first_line[48];
 extern char menu_second_line[48];
 
@@ -14,7 +16,14 @@ extern uint8_t character[1];
 extern bool shift;
 extern uint8_t back;
 
-
+//mock
+struct container_mock {
+    int id;
+    char name[51];
+    uint8_t image[51];
+    uint8_t state[11];
+    uint8_t status[11];
+};
 
 //buttons
 extern volatile int enter_pressed;
@@ -33,6 +42,7 @@ extern char wifi_password;
 
 //menu
 extern bool menu_finished;
+extern bool show_containers_finished;
 typedef enum{
     MENU_START,
     MENU_DEFAULT,
@@ -50,8 +60,10 @@ typedef enum{
 extern esp_param;
 extern current_menu;
 menu show_menu();
+void show_containers();
 
+
+void menu_line(int line, char * format, ...);
 void update_screen();
-void menu_text(char[], char[]);
 
 #endif

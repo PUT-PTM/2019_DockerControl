@@ -83,6 +83,8 @@ uint8_t back = 0;
 volatile uint8_t pulse_count;
 volatile uint8_t positions;
 bool menu_finished = false;
+bool show_containers_finished = false;
+
 //menu
 esp_param = PARAM_IP;
 int current_menu = MENU_START;
@@ -90,7 +92,6 @@ int current_menu = MENU_START;
 
 char menu_first_line[48];
 char menu_second_line[48];
-char *test_char;
 
 volatile int enter_pressed = 0;
 volatile int confirm_pressed = 0;
@@ -253,7 +254,7 @@ int main(void)
   util_log("DockerControl start");
 
   show_menu();
-
+  show_containers(); //TODO: move it
   start_dc();
 
   /* USER CODE END 2 */
