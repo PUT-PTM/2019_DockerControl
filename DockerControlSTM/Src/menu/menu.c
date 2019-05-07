@@ -3,6 +3,36 @@
 #include "menu/menu.h"
 #include "main.h"
 
+uint8_t esp_param = PARAM_IP;
+uint8_t current_menu = MENU_START;
+
+char menu_first_line[48];
+char menu_second_line[48];
+
+uint8_t name[48];
+volatile uint8_t name_pos = 0;
+uint8_t character[1] = {0};
+bool shift = 0;
+uint8_t back = 0;
+
+// encoder
+volatile uint8_t pulse_count;
+volatile uint8_t positions;
+
+// system data
+extern char server_ip;
+extern char server_port;
+extern char wifi_name;
+extern char wifi_password;
+
+//menu
+bool menu_finished = false;
+bool show_containers_finished = false;
+
+// buttons
+volatile uint8_t enter_pressed = 0;
+volatile uint8_t confirm_pressed = 0;
+volatile uint8_t back_pressed = 0;
 
 int button_enter(){
     if(enter_pressed){
@@ -32,7 +62,7 @@ void update_screen() {
     hd44780_printf("%s", menu_second_line);
 }
 
-void menu_line(int line, char *format, ...) {
+void menu_line(uint8_t line, char *format, ...) {
     char buffer[50];
 
     va_list args;
@@ -123,14 +153,6 @@ void menu_start(){
 menu show_menu(){
     util_log("Show_menu begin");
 
-    struct container_mock containers_mock = {
-            1,
-            "Docker Nothing",
-            "vrqe3WGRWEFV2Q",
-            "Stopped",
-            "idk"
-    };
-
     while(!menu_finished) {
         pulse_count = (uint8_t) TIM1->CNT;
         positions = (uint8_t) (pulse_count / 4);
@@ -141,7 +163,6 @@ menu show_menu(){
                 break;
             case MENU_DEFAULT:
                 menu_line(0, "Connecting using defaults");
-                for(int x=0; x<10000000;x++){} //TODO: Remove
                 menu_finished = true;
                 break;
             case MENU_CUSTOM:
@@ -216,59 +237,16 @@ menu show_menu(){
     }
 }
 
-
-void show_containers() {
-    struct container_mock containers_mock[] = {
-            {
-                    1,
-                    "Docker Nothing",
-                    "nothing:latest",
-                    "created",
-                    "idk"
-            },
-            {
-                    2,
-                    "LED Manager",
-                    "nothing:latest",
-                    "running",
-                    "idk"
-            },
-            {
-                    3,
-                    "LCD",
-                    "nothing:latest",
-                    "dead",
-                    "idk"
-            },
-            {
-                    4,
-                    "STM Docker",
-                    "nothing:latest",
-                    "running",
-                    "idk"
-            },
-            {
-                    5,
-                    "Docker Nothing",
-                    "nothing:latest",
-                    "paused",
-                    "idk"
-            }
-    };
-    int containers_mock_size = 5;
-//struct container
-//    id[65];
-//    name[51];
-//    image[51];
-//    state[11];
-//    status[11];
-//};
-    while(!show_containers_finished){
+void show_containers(const struct container * const containers, const uint8_t * const size) {
+    uint8_t prev_i = 21;
+    while(!show_containers_finished) {
         pulse_count = (uint8_t) TIM1->CNT;
         positions = (uint8_t) (pulse_count / 4);
-        int index = positions % containers_mock_size;
-        menu_line(0,"%d %s", containers_mock[index].id, containers_mock[index].name);
-        menu_line(1,"%s, %s, %s", containers_mock[index].image, containers_mock[index].state, containers_mock[index].status);
+        uint8_t i = positions % *size;
+        if (i != prev_i) {
+            prev_i = i;
+            menu_line(0, (uint8_t *) "%d %s", containers[i].id, containers[i].name);
+            menu_line(1, (uint8_t *) "%s, %s, %s", containers[i].image, containers[i].state, containers[i].status);
+        }
     }
-
 }

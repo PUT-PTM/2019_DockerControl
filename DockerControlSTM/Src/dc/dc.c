@@ -138,6 +138,9 @@ void dc_update_containers(const uint8_t * const packet_body) {
         dc_cmd_get_data(packet_body, &data_length, containers[containers_size].image);
         dc_cmd_get_data(packet_body, &data_length, containers[containers_size].state);
         dc_cmd_get_data(packet_body, &data_length, containers[containers_size].status);
+
+        util_log(containers[containers_size].name);
+
         containers_size++;
     }
     new_containers = 1;

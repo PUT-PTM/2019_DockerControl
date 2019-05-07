@@ -75,27 +75,24 @@ UART_HandleTypeDef huart3;
 
 /* USER CODE BEGIN PV */
 
-char name[48];
-volatile int name_pos = 0;
-uint8_t character[1] = {0};
-bool shift = 0;
-uint8_t back = 0;
-volatile uint8_t pulse_count;
-volatile uint8_t positions;
-bool menu_finished = false;
-bool show_containers_finished = false;
+extern uint8_t name[48];
+extern volatile uint8_t name_pos;
+extern uint8_t character[1];
+extern bool shift;
+extern uint8_t back;
+extern volatile uint8_t pulse_count;
+extern volatile uint8_t positions;
+extern bool menu_finished;
+extern bool show_containers_finished;
 
-//menu
-esp_param = PARAM_IP;
-int current_menu = MENU_START;
-
-
-char menu_first_line[48];
-char menu_second_line[48];
-
-volatile int enter_pressed = 0;
-volatile int confirm_pressed = 0;
-volatile int back_pressed = 0;
+// menu
+extern uint8_t esp_param;
+extern uint8_t current_menu;
+extern char menu_first_line[48];
+extern char menu_second_line[48];
+extern volatile uint8_t enter_pressed;
+extern volatile uint8_t confirm_pressed;
+extern volatile uint8_t back_pressed;
 
 // system data
 extern char server_ip;
@@ -107,10 +104,6 @@ extern char wifi_password;
 extern uint8_t packet_received;
 extern uint8_t received_packet_header[10];
 extern uint8_t received_packet_body[4096];
-
-
-extern uint8_t packet_header[10];
-extern uint8_t packet_body[4096];
 
 extern enum esp_connection_state connection_state;
 
@@ -243,6 +236,8 @@ int main(void)
   MX_TIM4_Init();
   /* USER CODE BEGIN 2 */
 
+  util_log("DockerControl init");
+
   HAL_TIM_Encoder_Start(&htim1, TIM_CHANNEL_ALL);
   HAL_TIM_Base_Start_IT(&htim4);
   hd44780_init(GPIOA, GPIO_PIN_1, GPIO_PIN_2, GPIO_PIN_3, GPIO_PIN_4, GPIO_PIN_5, GPIO_PIN_6, GPIO_PIN_7, HD44780_LINES_2, HD44780_FONT_5x8);
@@ -251,10 +246,11 @@ int main(void)
   hd44780_display(true, false, false);
 
   HAL_GPIO_WritePin(GPIOD, GPIO_PIN_12, GPIO_PIN_SET);
-  util_log("DockerControl start");
+  util_log("DockerControl ready");
 
   show_menu();
-  show_containers(); //TODO: move it
+//  show_containers(containers, &containers_size);
+//  show_containers(); //TODO: move it
   start_dc();
 
   /* USER CODE END 2 */
@@ -265,7 +261,7 @@ int main(void)
 // clion not to alert endless loop
 #pragma clang diagnostic push
 #pragma clang diagnostic ignored "-Wmissing-noreturn"
-
+    uint8_t send = 1;
     util_log("endless loop");
     while (1)
     {
@@ -274,15 +270,22 @@ int main(void)
 
             dc_new_cmd(received_packet_header, received_packet_body);
             util_log(DC_COMMAND_STRING[cmd]);
-
+            if (send == 1) {
+                cmd = CALL;
+                dc_send(&huart3);
+                send = 0;
+            }
             packet_received = 0;
         }
         if(usb_received == 1){
             HAL_UART_Transmit_IT(&huart3, usb_data, sizeof(usb_data));
             usb_received = 0;
         }
+        if (new_containers == 1) {
+            show_containers(containers, &containers_size);
+            new_containers = 0;
+        }
 
-    if(name_pos < 0) { name_pos = 0; }
 
     /* USER CODE END WHILE */
 
