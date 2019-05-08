@@ -30,13 +30,34 @@ bool menu_finished = false;
 bool show_containers_finished = false;
 
 // buttons
-volatile uint8_t enter_pressed = 0;
-volatile uint8_t confirm_pressed = 0;
-volatile uint8_t back_pressed = 0;
+volatile uint8_t enter_pressed = 0; //encoder
+volatile uint8_t confirm_pressed = 0; //green
+volatile uint8_t back_pressed = 0; //white
+volatile uint8_t shift_pressed = 0; //blue
 
 int button_enter(){
     if(enter_pressed){
         enter_pressed = 0;
+        return 1;
+    }
+    else{
+        return 0;
+    }
+}
+
+int button_shift(){
+    if(shift_pressed){
+        shift_pressed = 0;
+        return 1;
+    }
+    else{
+        return 0;
+    }
+}
+
+int button_back(){
+    if(back_pressed){
+        back_pressed = 0;
         return 1;
     }
     else{
@@ -122,6 +143,8 @@ void menu_custom(){
             menu_line(0, ">Connect");
             menu_line(1, "");
             if (button_enter()) {
+                menu_line(0, "Connecting...");
+                menu_line(1, "");
                 menu_finished = true;
             }
         default:
@@ -156,13 +179,13 @@ menu show_menu(){
     while(!menu_finished) {
         pulse_count = (uint8_t) TIM1->CNT;
         positions = (uint8_t) (pulse_count / 4);
-
         switch (current_menu) {
             case MENU_START:
                 menu_start();
                 break;
             case MENU_DEFAULT:
                 menu_line(0, "Connecting using defaults");
+                menu_line(1, "");
                 menu_finished = true;
                 break;
             case MENU_CUSTOM:
@@ -173,20 +196,22 @@ menu show_menu(){
                 char temp = (positions % 10 + 48);
                 menu_line(0, "Number: %c %c >%c< %c %c", temp-2, temp-1, temp, temp+1, temp+2);
                 menu_line(1, name);
+
                 if (button_enter()) {
                     name[name_pos] = character[0];
                     name_pos++;
                 }
-                if (shift == 1) {
-                    shift = 0;
+                if (button_shift()) {
                     name[name_pos] = '.';
                     name_pos++;
                 }
-                if (back_pressed == 1) {
-                    back_pressed = 0;
-                    name_pos--;
-                    name[name_pos] = ' ';
+                if (button_back()) {
+                    if(name_pos > 0) {
+                        name_pos--;
+                        name[name_pos] = ' ';
+                    }
                 }
+
                 if (button_confirm()) {
                     switch (esp_param) {
                         case PARAM_IP:
@@ -198,28 +223,27 @@ menu show_menu(){
                     }
                     current_menu = MENU_CUSTOM;
                 }
-                shift = 0;
                 break;
             case MENU_CUSTOM_WIFI:
-                character[0] = (uint8_t) ((positions + 65 + shift * 32));
-                char temp2 = (positions % 26 + 65);
-                menu_line(0, "Letter: %c %c >%c< %c %c", temp2-2, temp2-1, temp2, temp2+1, temp2+2);
+                character[0] = (uint8_t) ((positions % 26 + 65 + shift * 32));
+                char temp2 = (positions % 26 + 65 + shift * 32);
+                menu_line(0, "Letter: %c %c >%c< %c %c  %d", temp2-2, temp2-1, temp2, temp2+1, temp2+2, name_pos);
                 menu_line(1, name);
 
                 if (button_enter()) {
                     name[name_pos] = character[0];
                     name_pos++;
                 }
-                if (shift == 1) {
-                    shift = 0;
-                    name[name_pos] = '.';
-                    name_pos++;
+                if (button_shift()) {
+                    shift = !shift;
                 }
-                if (back_pressed == 1) {
-                    back_pressed = 0;
-                    name_pos--;
-                    name[name_pos] = ' ';
+                if (button_back()) {
+                    if(name_pos > 0) {
+                        name_pos--;
+                        name[name_pos] = ' ';
+                    }
                 }
+
                 if (button_confirm()) {
                     switch (esp_param) {
                         case PARAM_NAME:
@@ -231,7 +255,6 @@ menu show_menu(){
                     }
                     current_menu = MENU_CUSTOM;
                 }
-                shift = 0;
                 break;
         }
     }
@@ -239,14 +262,21 @@ menu show_menu(){
 
 void show_containers(const struct container * const containers, const uint8_t * const size) {
     uint8_t prev_i = 21;
+    bool show_details = false;
+
     while(!show_containers_finished) {
         pulse_count = (uint8_t) TIM1->CNT;
         positions = (uint8_t) (pulse_count / 4);
         uint8_t i = positions % *size;
-        if (i != prev_i) {
-            prev_i = i;
-            menu_line(0, (uint8_t *) "%d %s", containers[i].id, containers[i].name);
-            menu_line(1, (uint8_t *) "%s, %s, %s", containers[i].image, containers[i].state, containers[i].status);
+            if (!show_details) {
+                menu_line(0, (uint8_t *) "%s", containers[i].name);
+                menu_line(1, (uint8_t *) "%-11s  %11s", containers[i].state, containers[i].status);
+            } else {
+                menu_line(0, (uint8_t *) "%s", containers[i].name);
+                menu_line(1, (uint8_t *) "%s", containers[i].image);
+            }
+        if (button_enter()) {
+            show_details = !show_details;
         }
     }
 }

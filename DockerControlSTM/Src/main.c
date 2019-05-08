@@ -78,7 +78,6 @@ UART_HandleTypeDef huart3;
 extern uint8_t name[48];
 extern volatile uint8_t name_pos;
 extern uint8_t character[1];
-extern bool shift;
 extern uint8_t back;
 extern volatile uint8_t pulse_count;
 extern volatile uint8_t positions;
@@ -90,9 +89,12 @@ extern uint8_t esp_param;
 extern uint8_t current_menu;
 extern char menu_first_line[48];
 extern char menu_second_line[48];
+
+//buttons
 extern volatile uint8_t enter_pressed;
 extern volatile uint8_t confirm_pressed;
 extern volatile uint8_t back_pressed;
+extern volatile uint8_t shift_pressed;
 
 // system data
 extern char server_ip;
@@ -175,7 +177,7 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim){
         enter_pressed = 1;
     }
     else if (HAL_GPIO_ReadPin(GPIOD, GPIO_PIN_1) == GPIO_PIN_SET) {
-        shift = !shift;
+        shift_pressed = 1;
     }
     else if (HAL_GPIO_ReadPin(GPIOD, GPIO_PIN_2) == GPIO_PIN_SET) {
         back_pressed = 1;
