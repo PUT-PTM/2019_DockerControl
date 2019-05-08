@@ -6,14 +6,14 @@
 uint8_t esp_param = PARAM_IP;
 uint8_t current_menu = MENU_START;
 
+// lcd
 char menu_first_line[48];
 char menu_second_line[48];
 
+// string
 uint8_t name[48];
 volatile uint8_t name_pos = 0;
 uint8_t character[1] = {0};
-bool shift = 0;
-uint8_t back = 0;
 
 // encoder
 volatile uint8_t pulse_count;
@@ -25,15 +25,15 @@ extern char server_port;
 extern char wifi_name;
 extern char wifi_password;
 
-//menu
+// menu
 bool menu_finished = false;
-bool show_containers_finished = false;
 
 // buttons
 volatile uint8_t enter_pressed = 0; //encoder
 volatile uint8_t confirm_pressed = 0; //green
 volatile uint8_t back_pressed = 0; //white
 volatile uint8_t shift_pressed = 0; //blue
+bool shift = 0;
 
 int button_enter(){
     if(enter_pressed){
@@ -263,6 +263,7 @@ menu show_menu(){
 void show_containers(const struct container * const containers, const uint8_t * const size) {
     uint8_t prev_i = 21;
     bool show_details = false;
+    bool show_containers_finished = false;
 
     while(!show_containers_finished) {
         pulse_count = (uint8_t) TIM1->CNT;

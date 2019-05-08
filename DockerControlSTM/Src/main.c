@@ -75,21 +75,6 @@ UART_HandleTypeDef huart3;
 
 /* USER CODE BEGIN PV */
 
-extern uint8_t name[48];
-extern volatile uint8_t name_pos;
-extern uint8_t character[1];
-extern uint8_t back;
-extern volatile uint8_t pulse_count;
-extern volatile uint8_t positions;
-extern bool menu_finished;
-extern bool show_containers_finished;
-
-// menu
-extern uint8_t esp_param;
-extern uint8_t current_menu;
-extern char menu_first_line[48];
-extern char menu_second_line[48];
-
 //buttons
 extern volatile uint8_t enter_pressed;
 extern volatile uint8_t confirm_pressed;
