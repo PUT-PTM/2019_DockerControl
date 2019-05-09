@@ -10,11 +10,6 @@ uint8_t current_menu = MENU_START;
 char menu_first_line[48];
 char menu_second_line[48];
 
-// string
-uint8_t name[48];
-volatile uint8_t name_pos = 0;
-uint8_t character[1] = {0};
-
 // encoder
 volatile uint8_t pulse_count;
 volatile uint8_t positions;
@@ -24,6 +19,12 @@ extern char server_ip;
 extern char server_port;
 extern char wifi_name;
 extern char wifi_password;
+
+// huart
+extern UART_HandleTypeDef huart3;
+
+// dc
+extern enum DC_COMMAND_ENUM cmd;
 
 // menu
 bool menu_finished = false;
@@ -176,6 +177,13 @@ void menu_start(){
 menu show_menu(){
     util_log("Show_menu begin");
 
+// string
+    uint8_t name[48];
+    volatile uint8_t name_pos = 0;
+    uint8_t character[1] = {0};
+    for(int i=0; i<48; i++){
+        name[i] = 0;
+    }
     while(!menu_finished) {
         pulse_count = (uint8_t) TIM1->CNT;
         positions = (uint8_t) (pulse_count / 4);
@@ -261,7 +269,6 @@ menu show_menu(){
 }
 
 void show_containers(const struct container * const containers, const uint8_t * const size) {
-    uint8_t prev_i = 21;
     bool show_details = false;
     bool show_containers_finished = false;
 
@@ -269,15 +276,54 @@ void show_containers(const struct container * const containers, const uint8_t * 
         pulse_count = (uint8_t) TIM1->CNT;
         positions = (uint8_t) (pulse_count / 4);
         uint8_t i = positions % *size;
-            if (!show_details) {
-                menu_line(0, (uint8_t *) "%s", containers[i].name);
-                menu_line(1, (uint8_t *) "%-11s  %11s", containers[i].state, containers[i].status);
-            } else {
-                menu_line(0, (uint8_t *) "%s", containers[i].name);
-                menu_line(1, (uint8_t *) "%s", containers[i].image);
-            }
+
+        if (!show_details) {
+            menu_line(0, (uint8_t *) "%s", containers[i].name);
+            menu_line(1, (uint8_t *) "%-11s  %11s", containers[i].state, containers[i].status);
+        } else {
+            menu_line(0, (uint8_t *) "%s", containers[i].name);
+            menu_line(1, (uint8_t *) "%s", containers[i].image);
+        }
+
         if (button_enter()) {
             show_details = !show_details;
         }
+        if(button_shift()){
+            menu_container_action();
+        }
+        if(button_back()){
+
+        }
+        if(button_confirm()){
+            show_containers_finished = true;
+        }
     }
+}
+
+void menu_container_action(){
+    while(!button_enter()){
+        pulse_count = (uint8_t) TIM1->CNT;
+        positions = (uint8_t) (pulse_count / 4);
+        uint8_t i = positions % 4;
+        switch(i){
+            case 0:
+                cmd = CSTR;
+                menu_line(1, ">start restart stop del");
+                break;
+            case 1:
+                cmd = CSTP;
+                menu_line(1, " start>restart stop del");
+                break;
+            case 2:
+                cmd = CRST;
+                menu_line(1, " start restart>stop del");
+                break;
+            case 3:
+                cmd = CRMV;
+                menu_line(1, " start restart stop>del");
+                break;
+        }
+    }
+    dc_make_body(); // containers[i].id; //TODO: Add parameters
+    dc_send(&huart3);
 }
