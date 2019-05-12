@@ -23,6 +23,8 @@ header: `$<sessionId:uint8[3]>!<bodySize:uint12[4]!` body: `<cmd:char[4]>!<data?
 
 **image:** `image:char[50]`
 
+**stats:** `active_containers:uint[2], paused_containers:uint[2], stopped_containers:uint[2], images:uint[4], cpu:uint[2], memory:uint[6]`
+
 #### commands
 | CMD | data from STM | data from server | notes|
 |-----|---------------|------------------|------|
@@ -37,19 +39,21 @@ header: `$<sessionId:uint8[3]>!<bodySize:uint12[4]!` body: `<cmd:char[4]>!<data?
 | CRMV | [id] | [success],[id] | Remove container |
 | CCRT | [image] | [success] | Create container from image |
 | IALL | - | [array of images] | All images |
-| SSTS | - | | Statistics of system |
+| SSTS | - | [stats] | Statistics of system |
 | ALRT | *sent only from server* | | Alerts STM |
-| ALRT | *sent only from server* | error explanation | Signals error on server |
+| ERRR | *sent only from server* | error explanation | Signals error on server |
 
-[container] – data of container separated by ,: [id],[name],[image],[state],[status]
+[container] – data of container separated by `,`: `[id],[name],[image],[state],[status]`
 
 [image] – image name with tag (i.e. mongo:latest)
 
-[array of data] – data separated by ;
+[array of data] – data separated by `;`
 
 [id] – id of a container
 
-[success] – 1 if true, 0 if false
+[success] – `1` if `true`, `0` if `false`
+
+[stats] - data of stats separated by `,`: `[active],[paused],[stopped],[images],[cpu],[memory]`
 
 
 ## tools
