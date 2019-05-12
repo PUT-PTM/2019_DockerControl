@@ -96,12 +96,14 @@ extern enum esp_connection_state connection_state;
 
 // dc
 extern enum DC_COMMAND_ENUM cmd;
-extern uint8_t new_containers;
-extern uint8_t containers_size;
-extern struct container containers[20];
-extern uint8_t new_images;
-extern uint8_t images_size;
-extern uint8_t images[20][50];
+extern uint8_t dc_ready;
+extern uint8_t dc_wait;
+extern uint8_t dc_new_containers;
+extern uint8_t dc_containers_size;
+extern struct container dc_containers[];
+extern uint8_t dc_new_images;
+extern uint8_t dc_images_size;
+extern image dc_images[];
 
 // uart
 uint8_t uart_receive[5];
@@ -154,9 +156,9 @@ void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart) {
     }
 }
 
-void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim){
+void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim) {
   HAL_GPIO_TogglePin(GPIOD, GPIO_PIN_13);
-  if(htim->Instance == TIM2){
+  if(htim->Instance == TIM2) {
     if (HAL_GPIO_ReadPin(GPIOE, GPIO_PIN_5) == GPIO_PIN_SET) {
         enter_pressed = 1;
     }
@@ -172,21 +174,19 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim){
     HAL_GPIO_TogglePin(GPIOD, GPIO_PIN_15);
     HAL_TIM_Base_Stop(&htim2);
   }
-  if(htim->Instance == TIM4){
+  if (htim->Instance == TIM4) { // TODO
     HAL_GPIO_TogglePin(GPIOD, GPIO_PIN_12);
     cmd = CALL;
-    dc_make_body(); //TODO: Add parameters (???)
     dc_send(&huart3);
 
     //TODO: check if delay is needed
     cmd = IALL;
-    dc_make_body(); //TODO: Add parameters (???)
     dc_send(&huart3);
   }
 }
 
 void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin) {
-  if (GPIO_Pin == GPIO_PIN_5 || GPIO_Pin == GPIO_PIN_1 || GPIO_Pin ==  GPIO_PIN_2 || GPIO_Pin ==  GPIO_PIN_3){// && HAL_GPIO_ReadPin(GPIOE, GPIO_PIN_5) == GPIO_PIN_SET) {
+  if (GPIO_Pin == GPIO_PIN_5 || GPIO_Pin == GPIO_PIN_1 || GPIO_Pin ==  GPIO_PIN_2 || GPIO_Pin ==  GPIO_PIN_3) {// && HAL_GPIO_ReadPin(GPIOE, GPIO_PIN_5) == GPIO_PIN_SET) {
     HAL_GPIO_TogglePin(GPIOD, GPIO_PIN_14);
     HAL_TIM_Base_Start_IT(&htim2);
   }
@@ -242,11 +242,8 @@ int main(void)
   HAL_GPIO_WritePin(GPIOD, GPIO_PIN_12, GPIO_PIN_SET);
   util_log("DockerControl ready");
 
-  show_menu();
-//  show_containers(containers, &containers_size);
-//  show_containers(); //TODO: move it
+  connection_menu();
   start_dc();
-
   /* USER CODE END 2 */
 
   /* Infinite loop */
@@ -255,39 +252,36 @@ int main(void)
 // clion not to alert endless loop
 #pragma clang diagnostic push
 #pragma clang diagnostic ignored "-Wmissing-noreturn"
-    uint8_t send = 1;
     util_log("endless loop");
     while (1)
     {
-        if (packet_received == 1) {
+        if (dc_ready) {
+            dc_send(&huart3);
+            dc_ready = 0;
+        }
+        else if (packet_received) {
             util_log("got packet");
+            dc_wait = 0;
 
             dc_new_cmd(received_packet_header, received_packet_body);
-            util_log(DC_COMMAND_STRING[cmd]);
-            if (send == 1) {
-                cmd = CALL;
-                dc_send(&huart3);
-                send = 0;
-            }
+
             packet_received = 0;
         }
-        if(usb_received == 1){
+        else if (usb_received) {
             HAL_UART_Transmit_IT(&huart3, usb_data, sizeof(usb_data));
             usb_received = 0;
         }
-        if (new_containers == 1) {
-            show_containers(containers, &containers_size);
-            new_containers = 0;
+        else if (!dc_wait) {
+            main_menu(dc_containers, &dc_containers_size, dc_images, &dc_images_size);
         }
-
 
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
 
-#pragma clang diagnostic pop
-
   }
+
+#pragma clang diagnostic pop
   /* USER CODE END 3 */
 }
 

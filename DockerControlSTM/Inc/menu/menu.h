@@ -2,17 +2,16 @@
 #define DOCKERCONTROLSTM_MENU_H
 
 #include "main.h"
-#include <stdbool.h>
-#include<string.h>
+#include <string.h>
 #include "dc/dc.h"
 
-typedef enum{
+typedef enum {
     MENU_START,
     MENU_DEFAULT,
     MENU_CUSTOM,
     MENU_CUSTOM_SERVER,
-    MENU_CUSTOM_WIFI
-} menu;
+    MENU_CUSTOM_WIFI,
+} menu_connection;
 
 typedef enum{
     PARAM_IP,
@@ -21,10 +20,23 @@ typedef enum{
     PARAM_PASSWORD
 } esp_params;
 
-menu show_menu();
-void show_containers(const struct container * containers, const uint8_t * size);
+
+typedef enum {
+    MAIN_START,
+    MAIN_CONTAINERS,
+    MAIN_IMAGES,
+    MAIN_STATS,
+    MAIN_ALERTS
+} menu_main;
+
 void menu_line(uint8_t line, char * format, ...);
 void update_screen();
-void menu_container_action();
+
+void connection_menu();
+
+void main_menu(const struct container * containers, const uint8_t * containers_size,
+               const image * images, const uint8_t * images_size);
+
+uint8_t menu_container_action(const uint8_t * container_index);
 
 #endif
