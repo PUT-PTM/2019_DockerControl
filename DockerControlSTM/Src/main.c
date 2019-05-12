@@ -75,24 +75,11 @@ UART_HandleTypeDef huart3;
 
 /* USER CODE BEGIN PV */
 
-extern uint8_t name[48];
-extern volatile uint8_t name_pos;
-extern uint8_t character[1];
-extern bool shift;
-extern uint8_t back;
-extern volatile uint8_t pulse_count;
-extern volatile uint8_t positions;
-extern bool menu_finished;
-extern bool show_containers_finished;
-
-// menu
-extern uint8_t esp_param;
-extern uint8_t current_menu;
-extern char menu_first_line[48];
-extern char menu_second_line[48];
+// buttons
 extern volatile uint8_t enter_pressed;
 extern volatile uint8_t confirm_pressed;
 extern volatile uint8_t back_pressed;
+extern volatile uint8_t shift_pressed;
 
 // system data
 extern char server_ip;
@@ -169,13 +156,12 @@ void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart) {
 
 void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim){
   HAL_GPIO_TogglePin(GPIOD, GPIO_PIN_13);
-  volatile TIM_TypeDef *temp = htim->Instance;
   if(htim->Instance == TIM2){
     if (HAL_GPIO_ReadPin(GPIOE, GPIO_PIN_5) == GPIO_PIN_SET) {
         enter_pressed = 1;
     }
     else if (HAL_GPIO_ReadPin(GPIOD, GPIO_PIN_1) == GPIO_PIN_SET) {
-        shift = !shift;
+        shift_pressed = 1;
     }
     else if (HAL_GPIO_ReadPin(GPIOD, GPIO_PIN_2) == GPIO_PIN_SET) {
         back_pressed = 1;
@@ -185,6 +171,17 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim){
     }
     HAL_GPIO_TogglePin(GPIOD, GPIO_PIN_15);
     HAL_TIM_Base_Stop(&htim2);
+  }
+  if(htim->Instance == TIM4){
+    HAL_GPIO_TogglePin(GPIOD, GPIO_PIN_12);
+    cmd = CALL;
+    dc_make_body(); //TODO: Add parameters (???)
+    dc_send(&huart3);
+
+    //TODO: check if delay is needed
+    cmd = IALL;
+    dc_make_body(); //TODO: Add parameters (???)
+    dc_send(&huart3);
   }
 }
 
@@ -239,11 +236,8 @@ int main(void)
   util_log("DockerControl init");
 
   HAL_TIM_Encoder_Start(&htim1, TIM_CHANNEL_ALL);
-  HAL_TIM_Base_Start_IT(&htim4);
+//  HAL_TIM_Base_Start_IT(&htim4); //TODO: find place to start timer
   hd44780_init(GPIOA, GPIO_PIN_1, GPIO_PIN_2, GPIO_PIN_3, GPIO_PIN_4, GPIO_PIN_5, GPIO_PIN_6, GPIO_PIN_7, HD44780_LINES_2, HD44780_FONT_5x8);
-  hd44780_position(0, 1);
-  hd44780_print("Hello World! ");
-  hd44780_display(true, false, false);
 
   HAL_GPIO_WritePin(GPIOD, GPIO_PIN_12, GPIO_PIN_SET);
   util_log("DockerControl ready");
@@ -451,9 +445,9 @@ static void MX_TIM4_Init(void)
 
   /* USER CODE END TIM4_Init 1 */
   htim4.Instance = TIM4;
-  htim4.Init.Prescaler = 7199;
+  htim4.Init.Prescaler = 35999;
   htim4.Init.CounterMode = TIM_COUNTERMODE_UP;
-  htim4.Init.Period = 999;
+  htim4.Init.Period = 19999;
   htim4.Init.ClockDivision = TIM_CLOCKDIVISION_DIV1;
   if (HAL_TIM_Base_Init(&htim4) != HAL_OK)
   {

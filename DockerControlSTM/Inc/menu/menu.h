@@ -23,8 +23,8 @@ typedef enum{
 
 menu show_menu();
 void show_containers(const struct container * containers, const uint8_t * size);
-
 void menu_line(uint8_t line, char * format, ...);
 void update_screen();
+void menu_container_action();
 
 #endif
