@@ -1,7 +1,8 @@
 package pl.poznan.put.cie.ptm.dockercontrol.service.service
 
-import pl.poznan.put.cie.ptm.dockercontrol.service.docker.Container
-import pl.poznan.put.cie.ptm.dockercontrol.service.docker.Image
+import pl.poznan.put.cie.ptm.dockercontrol.service.docker.model.Container
+import pl.poznan.put.cie.ptm.dockercontrol.service.docker.model.Image
+import pl.poznan.put.cie.ptm.dockercontrol.service.docker.model.Stats
 import java.lang.StringBuilder
 
 object DataSerializer {
@@ -55,4 +56,14 @@ object DataSerializer {
     }
 
     private fun toImage(image: Image) = image.repoTags.first()
+
+    private const val MEGA = 1_000_000
+
+    fun toStats(stats: Stats) =
+            "${stats.running}," +
+            "${stats.paused}," +
+            "${stats.stopped}," +
+            "${stats.images}," +
+            "${stats.cpu}," +
+            "${stats.memory / MEGA}"
 }
