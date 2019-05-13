@@ -60,7 +60,7 @@ void esp_init(UART_HandleTypeDef * const huart) {
     esp_send_def_command(huart, wifi);
     util_log(wifi);
 
-    HAL_Delay(12000);
+    HAL_Delay(10000);
 
     // get esp ip
     command = ESP_GET_IP;

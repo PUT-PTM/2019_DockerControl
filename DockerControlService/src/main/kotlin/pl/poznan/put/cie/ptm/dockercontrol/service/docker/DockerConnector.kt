@@ -13,6 +13,9 @@ import com.fasterxml.jackson.module.paramnames.ParameterNamesModule
 import io.ktor.client.response.HttpResponse
 import io.ktor.client.response.readText
 import io.ktor.http.HttpStatusCode
+import pl.poznan.put.cie.ptm.dockercontrol.service.docker.model.Container
+import pl.poznan.put.cie.ptm.dockercontrol.service.docker.model.Image
+import pl.poznan.put.cie.ptm.dockercontrol.service.docker.model.Stats
 import pl.poznan.put.cie.ptm.dockercontrol.service.utils.Resources
 
 class DockerConnector {
@@ -91,7 +94,8 @@ class DockerConnector {
         return mapper.readValue(json)
     }
 
-    fun getStats() = runBlocking { http.get("info").readText() }
-
-    fun getVersion() = runBlocking { http.get("version").readText() }
+    fun getStats(): Stats {
+        val json = runBlocking { http.get("info").readText() }
+        return mapper.readValue(json)
+    }
 }

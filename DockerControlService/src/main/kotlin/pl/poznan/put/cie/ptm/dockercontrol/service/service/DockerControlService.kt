@@ -40,7 +40,7 @@ class DockerControlService {
     }
 
     fun restartContainer(data: String, session: Session): String {
-        val restarted = connector.startContainer(data)
+        val restarted = connector.restartContainer(data)
         return "${if (restarted) 1 else 0},$data"
     }
 
@@ -54,7 +54,6 @@ class DockerControlService {
         return "${if (created) 1 else 0}"
     }
 
-
     // images
     fun getImages(data: String, session: Session): String {
         val images =  connector.getImages()
@@ -63,6 +62,7 @@ class DockerControlService {
 
     // system
     fun getStats(data: String, session: Session): String {
-        return "${connector.getStats()}-${connector.getVersion()}"
+        val stats = connector.getStats()
+        return DataSerializer.toStats(stats)
     }
 }

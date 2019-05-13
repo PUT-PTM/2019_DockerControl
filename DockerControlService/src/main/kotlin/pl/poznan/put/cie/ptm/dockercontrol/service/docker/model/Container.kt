@@ -1,4 +1,4 @@
-package pl.poznan.put.cie.ptm.dockercontrol.service.docker
+package pl.poznan.put.cie.ptm.dockercontrol.service.docker.model
 
 import java.time.Instant
 
