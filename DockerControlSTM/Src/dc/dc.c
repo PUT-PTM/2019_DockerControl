@@ -125,7 +125,7 @@ void dc_send(UART_HandleTypeDef * const huart) {
     dc_make_body();
     dc_make_header();
     esp_send_command(huart, dc_header, 10);
-    esp_send_command(huart, dc_body, 6);
+    esp_send_command(huart, dc_body, 6 + dc_data_size);
     dc_wait = 1;
 }
 
