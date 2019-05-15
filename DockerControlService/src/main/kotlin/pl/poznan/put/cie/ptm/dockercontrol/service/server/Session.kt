@@ -3,12 +3,9 @@ package pl.poznan.put.cie.ptm.dockercontrol.service.server
 import io.ktor.network.sockets.Socket
 import io.ktor.network.sockets.openReadChannel
 import io.ktor.network.sockets.openWriteChannel
-import kotlinx.coroutines.GlobalScope
-import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.io.readPacket
 import kotlinx.coroutines.io.writeFully
-import kotlinx.coroutines.launch
 import pl.poznan.put.cie.ptm.dockercontrol.service.server.packet.Body
 import pl.poznan.put.cie.ptm.dockercontrol.service.commands.CMD
 import pl.poznan.put.cie.ptm.dockercontrol.service.commands.Commands
@@ -21,24 +18,21 @@ class Session (
     private val connection: Socket
 ) {
     var active = false
-    val job: Job
     private val input = connection.openReadChannel()
     private val output = connection.openWriteChannel(autoFlush = true)
 
-    init {
-        job = GlobalScope.launch {
-            try {
-                read()
-            } catch (e: Throwable) {
-                e.printStackTrace()
-            } finally {
-                connection.close()
-            }
-        }
-    }
-
     companion object {
         const val INACTIVE_SESSION_ID = 0
+    }
+
+    suspend fun start() {
+        try {
+            read()
+        } catch (e: Throwable) {
+            e.printStackTrace()
+        } finally {
+            connection.close()
+        }
     }
 
     private suspend fun read() {
