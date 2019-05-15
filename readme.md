@@ -40,7 +40,7 @@ header: `$<sessionId:uint8[3]>!<bodySize:uint12[4]!` body: `<cmd:char[4]>!<data?
 | CCRT | [image] | [success] | Create container from image |
 | IALL | - | [array of images] | All images |
 | SSTS | - | [stats] | Statistics of system |
-| ALRT | *sent only from server* | | Alerts STM |
+| ALRT | *sent only from server* | [container_id] | Alerts STM on containers death |
 | ERRR | *sent only from server* | error explanation | Signals error on server |
 
 [container] – data of container separated by `,`: `[id],[name],[image],[state],[status]`
@@ -78,10 +78,12 @@ other technologies:
 * openOCD
 
 ## how to compile & run
+The file `config.json` on the server and the file `esp_connnection_data.h` on the STM shall be filled with servers and Docker addresse before running the application
 
 ### server
 #### run locally
-tba
+`./gradlew run`
+
 #### run on Docker
 tba
 
@@ -95,7 +97,7 @@ tba
 tba
 
 ## license
-tba
+MIT (see LICENSE.md)
 
 ## credits
 The project is made by Jakub Riegel & Maciej Stosik
