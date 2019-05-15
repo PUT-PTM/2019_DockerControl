@@ -23,6 +23,67 @@ uint8_t dc_new_images = 0;
 uint8_t dc_images_size = 0;
 image dc_images[20];
 
+uint8_t dc_new_stats = 0;
+struct stats dc_stats;
+
+const uint8_t dc_cmd_copy_data(const uint8_t * const source, const uint16_t start, uint8_t * const destination) {
+    uint8_t length;
+    for (length = 0; source[length + start] != PACKET_DATA_DELIMITER && source[length + start] != PACKET_DATA_ARRAY_DELIMITER; length++);
+    memcpy(destination, source + start, length);
+    return length;
+}
+
+void dc_cmd_get_data(const uint8_t * const packet_body, uint16_t * const i, uint8_t * const destination) {
+    const uint8_t length = dc_cmd_copy_data(packet_body, *i, destination);
+    *(destination + length) = '\0';
+    *i += length + 1;
+}
+
+void dc_set_session_id(const uint8_t * const packet_header) {
+    strncpy(dc_session_id, (const char *) packet_header + 1, 3);
+    dc_session_id[3] = '\0';
+    util_log(dc_session_id);
+}
+
+void dc_update_containers(const uint8_t * const packet_body) {
+    dc_containers_size = 0;
+    uint16_t i = PACKET_BODY_DATA_START;
+    while (packet_body[i] != PACKET_END) {
+        dc_cmd_get_data(packet_body, &i, dc_containers[dc_containers_size].id);
+        dc_cmd_get_data(packet_body, &i, dc_containers[dc_containers_size].name);
+        dc_cmd_get_data(packet_body, &i, dc_containers[dc_containers_size].image);
+        dc_cmd_get_data(packet_body, &i, dc_containers[dc_containers_size].state);
+        dc_cmd_get_data(packet_body, &i, dc_containers[dc_containers_size].status);
+
+        util_log(dc_containers[dc_containers_size].name);
+
+        dc_containers_size++;
+    }
+    dc_new_containers = 1;
+}
+
+void dc_update_images(const uint8_t * const packet_body) {
+    dc_images_size = 0;
+    uint16_t i = PACKET_BODY_DATA_START;
+    while (packet_body[i] != PACKET_END) {
+        dc_cmd_get_data(packet_body, &i, dc_images[dc_images_size]);
+        dc_images_size++;
+    }
+    dc_new_images = 1;
+}
+
+void dc_update_stats(const uint8_t * const packet_body) {
+    uint16_t i = PACKET_BODY_DATA_START;
+    dc_cmd_get_data(packet_body, &i, dc_stats.active_containers);
+    dc_cmd_get_data(packet_body, &i, dc_stats.paused_containers);
+    dc_cmd_get_data(packet_body, &i, dc_stats.stopped_containers);
+    dc_cmd_get_data(packet_body, &i, dc_stats.images);
+    dc_cmd_get_data(packet_body, &i, dc_stats.cpu);
+    dc_cmd_get_data(packet_body, &i, dc_stats.memory);
+
+    dc_new_stats = 1;
+}
+
 void dc_new_cmd(const uint8_t * const packet_header, const uint8_t * const packet_body) {
     dc_resolve_cmd(packet_body);
     dc_apply_cmd(packet_header, packet_body);
@@ -66,7 +127,9 @@ void dc_apply_cmd(const uint8_t * const packet_header, const uint8_t * const pac
         case IALL:
             dc_update_images(packet_body);
             break;
-        case SSTS:break;
+        case SSTS:
+            dc_update_stats(packet_body);
+            break;
         case ALRT:break;
         case ERRR:break;
         default:break;
@@ -128,50 +191,3 @@ void dc_send(UART_HandleTypeDef * const huart) {
     esp_send_command(huart, dc_body, 6 + dc_data_size);
     dc_wait = 1;
 }
-
-const uint8_t dc_cmd_copy_data(const uint8_t * const source, const uint16_t start, uint8_t * const destination) {
-    uint8_t length;
-    for (length = 0; source[length + start] != PACKET_DATA_DELIMITER && source[length + start] != PACKET_DATA_ARRAY_DELIMITER; length++);
-    memcpy(destination, source + start, length);
-    return length;
-}
-
-void dc_cmd_get_data(const uint8_t * const packet_body, uint16_t * const data_length, uint8_t * const destination) {
-    const uint8_t length = dc_cmd_copy_data(packet_body, *data_length, destination);
-    *(destination + length) = '\0';
-    *data_length += length + 1;
-}
-
-void dc_set_session_id(const uint8_t * const packet_header) {
-    strncpy(dc_session_id, (const char *) packet_header + 1, 3);
-    dc_session_id[3] = '\0';
-    util_log(dc_session_id);
-}
-
-void dc_update_containers(const uint8_t * const packet_body) {
-    dc_containers_size = 0;
-    uint16_t data_length = PACKET_BODY_DATA_START;
-    while (packet_body[data_length] != PACKET_END) {
-        dc_cmd_get_data(packet_body, &data_length, dc_containers[dc_containers_size].id);
-        dc_cmd_get_data(packet_body, &data_length, dc_containers[dc_containers_size].name);
-        dc_cmd_get_data(packet_body, &data_length, dc_containers[dc_containers_size].image);
-        dc_cmd_get_data(packet_body, &data_length, dc_containers[dc_containers_size].state);
-        dc_cmd_get_data(packet_body, &data_length, dc_containers[dc_containers_size].status);
-
-        util_log(dc_containers[dc_containers_size].name);
-
-        dc_containers_size++;
-    }
-    dc_new_containers = 1;
-}
-
-void dc_update_images(const uint8_t * const packet_body) {
-    dc_images_size = 0;
-    uint16_t data_length = PACKET_BODY_DATA_START;
-    while (packet_body[data_length] != PACKET_END) {
-        dc_cmd_get_data(packet_body, &data_length, dc_images[dc_images_size]);
-        dc_images_size++;
-    }
-    dc_new_images = 1;
-}
-
