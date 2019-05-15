@@ -13,6 +13,15 @@ struct container {
 
 typedef uint8_t image[51];
 
+struct stats {
+    uint8_t active_containers[3];
+    uint8_t paused_containers[3];
+    uint8_t stopped_containers[3];
+    uint8_t images[5];
+    uint8_t cpu[3];
+    uint8_t memory[7];
+};
+
 void dc_new_cmd(const uint8_t * packet_header, const uint8_t * packet_body);
 void dc_resolve_cmd(const uint8_t * packet_body);
 void dc_apply_cmd(const uint8_t * packet_header, const uint8_t * packet_body);
@@ -25,10 +34,5 @@ void dc_set_ready();
 void dc_start_session(UART_HandleTypeDef * huart);
 
 void dc_send(UART_HandleTypeDef * huart);
-
-void dc_set_session_id(const uint8_t * packet_header);
-void dc_update_containers(const uint8_t * packet_body);
-void dc_update_images(const uint8_t * packet_body);
-
 
 #endif //DOCKERCONTROLSTM_DC_H
