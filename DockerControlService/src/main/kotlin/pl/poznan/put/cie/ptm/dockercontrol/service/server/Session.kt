@@ -3,9 +3,11 @@ package pl.poznan.put.cie.ptm.dockercontrol.service.server
 import io.ktor.network.sockets.Socket
 import io.ktor.network.sockets.openReadChannel
 import io.ktor.network.sockets.openWriteChannel
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.io.readPacket
 import kotlinx.coroutines.io.writeFully
+import kotlinx.coroutines.withContext
 import pl.poznan.put.cie.ptm.dockercontrol.service.server.packet.Body
 import pl.poznan.put.cie.ptm.dockercontrol.service.commands.CMD
 import pl.poznan.put.cie.ptm.dockercontrol.service.commands.Commands
@@ -31,7 +33,7 @@ class Session (
         } catch (e: Throwable) {
             e.printStackTrace()
         } finally {
-            connection.close()
+            withContext(Dispatchers.IO) { connection.close() }
         }
     }
 
