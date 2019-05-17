@@ -7,7 +7,9 @@ import pl.poznan.put.cie.ptm.dockercontrol.service.utils.Logger
 import pl.poznan.put.cie.ptm.dockercontrol.service.utils.Resources
 import java.net.InetSocketAddress
 import io.ktor.network.sockets.Socket
+import io.ktor.util.KtorExperimentalAPI
 
+@KtorExperimentalAPI
 object TCPServer {
     private val IP = Resources.getString("server", "ip")
     private val PORT = Resources.getInt( "server", "port")
