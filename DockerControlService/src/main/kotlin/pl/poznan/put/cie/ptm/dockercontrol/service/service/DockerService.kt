@@ -3,14 +3,14 @@ package pl.poznan.put.cie.ptm.dockercontrol.service.service
 import pl.poznan.put.cie.ptm.dockercontrol.service.docker.DockerConnector
 import pl.poznan.put.cie.ptm.dockercontrol.service.server.Session
 
-class DockerControlService {
+class DockerService {
 
     private val connector = DockerConnector()
 
     // utils
     fun ready(data: String, session: Session): String {
         if (session.active) throw Session.SessionException("activating active session")
-        session.active = true
+        session.activate()
         return ""
     }
 
@@ -19,12 +19,12 @@ class DockerControlService {
     // containers
     fun getAllContainers(data: String, session: Session): String {
         val containers = connector.getAllContainers()
-        return DataSerializer.toContainerArray(containers)
+        return DataSerializer.toContainersArray(containers)
     }
 
     fun getActiveContainers(data: String, session: Session): String {
         val containers = connector.getRunningContainers()
-        return DataSerializer.toContainerArray(containers)
+        return DataSerializer.toContainersArray(containers)
     }
 
     fun getContainerStats(data: String, session: Session): String = "stats of $data container"
@@ -57,7 +57,7 @@ class DockerControlService {
     // images
     fun getImages(data: String, session: Session): String {
         val images =  connector.getImages()
-        return DataSerializer.toImageArray(images)
+        return DataSerializer.toImagesArray(images)
     }
 
     // system

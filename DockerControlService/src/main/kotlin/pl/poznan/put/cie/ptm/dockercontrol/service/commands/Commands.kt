@@ -1,11 +1,11 @@
 package pl.poznan.put.cie.ptm.dockercontrol.service.commands
 
 import pl.poznan.put.cie.ptm.dockercontrol.service.server.Session
-import pl.poznan.put.cie.ptm.dockercontrol.service.service.DockerControlService
+import pl.poznan.put.cie.ptm.dockercontrol.service.service.DockerService
 
 object Commands {
 
-    private val service = DockerControlService()
+    private val service = DockerService()
 
     private val commands = hashMapOf(
         // utils
@@ -29,8 +29,6 @@ object Commands {
         CMD.SSTS to service::getStats
     )
 
-    fun process(cmd: CMD, data: String, session: Session): String {
-        return commands[cmd]?.invoke(data, session) ?: "cmd error"
-    }
+    fun process(cmd: CMD, data: String, session: Session) = commands[cmd]?.invoke(data, session) ?: "cmd error"
 
 }
