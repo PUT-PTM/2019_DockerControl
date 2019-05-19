@@ -30,9 +30,14 @@ uint8_t dc_alert = 0;
 uint8_t dc_update = 0;
 int16_t dc_since_update = 0;
 
+const uint8_t dc_cmd_copy_data_condition(const uint8_t * const d) {
+    if (*d != PACKET_DATA_DELIMITER && *d != PACKET_DATA_ARRAY_DELIMITER && *d != PACKET_END) return 1;
+    return 0;
+}
+
 const uint8_t dc_cmd_copy_data(const uint8_t * const source, const uint16_t start, uint8_t * const destination) {
     uint8_t length;
-    for (length = 0; source[length + start] != PACKET_DATA_DELIMITER && source[length + start] != PACKET_DATA_ARRAY_DELIMITER; length++);
+    for (length = 0; dc_cmd_copy_data_condition(&(source[length + start])); length++);
     memcpy(destination, source + start, length);
     return length;
 }
