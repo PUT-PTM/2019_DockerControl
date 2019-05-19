@@ -385,11 +385,34 @@ void main_menu_images(uint8_t * const current_menu, const image * const images, 
 }
 
 void main_menu_alerts(uint8_t * const current_menu) {
+    uint8_t show_alerts_finished = 0;
+
+    while(!show_alerts_finished) {
+
+        menu_line(0, "Alerts");
+        menu_line(1, "" );
+
+        if (button_back()) {
+            show_alerts_finished = 1;
+            *current_menu = MAIN_START;
+        }
+    }
 
 }
 
 void main_menu_stats(uint8_t * const current_menu) {
+    uint8_t show_stats_finished = 0;
 
+    while(!show_stats_finished) {
+
+        menu_line(0, "Stats");
+        menu_line(1, "" );
+
+        if (button_back()) {
+            show_stats_finished = 1;
+            *current_menu = MAIN_START;
+        }
+    }
 }
 
 void main_menu(
