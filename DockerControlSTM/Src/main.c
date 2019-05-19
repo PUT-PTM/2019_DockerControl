@@ -102,6 +102,7 @@ extern struct container dc_containers[];
 extern uint8_t dc_new_images;
 extern uint8_t dc_images_size;
 extern image dc_images[];
+extern uint8_t dc_update;
 
 /* USER CODE END PV */
 
@@ -132,14 +133,8 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim) {
     HAL_GPIO_TogglePin(GPIOD, GPIO_PIN_15);
     HAL_TIM_Base_Stop(&htim2);
   }
-  if (htim->Instance == TIM4) { // TODO
-    HAL_GPIO_TogglePin(GPIOD, GPIO_PIN_12);
-    cmd = CALL;
-    dc_send(&huart3);
-
-    //TODO: check if delay is needed
-    cmd = IALL;
-    dc_send(&huart3);
+  if (htim->Instance == TIM4) {
+      dc_update_callback();
   }
 }
 
@@ -194,14 +189,13 @@ int main(void)
   util_log("DockerControl init");
 
   HAL_TIM_Encoder_Start(&htim1, TIM_CHANNEL_ALL);
-//  HAL_TIM_Base_Start_IT(&htim4); //TODO: find place to start timer
   hd44780_init(GPIOA, GPIO_PIN_1, GPIO_PIN_2, GPIO_PIN_3, GPIO_PIN_4, GPIO_PIN_5, GPIO_PIN_6, GPIO_PIN_7, HD44780_LINES_2, HD44780_FONT_5x8);
 
   HAL_GPIO_WritePin(GPIOD, GPIO_PIN_12, GPIO_PIN_SET);
   util_log("DockerControl ready");
 
   connection_menu();
-  dc_start(&huart3);
+  dc_start(&huart3, &htim4);
 
   /* USER CODE END 2 */
 
@@ -225,6 +219,10 @@ int main(void)
             dc_new_cmd(esp_received_packet_header, esp_received_packet_body);
 
             packet_received = 0;
+        }
+        else if (dc_update) {
+            util_log("updating containers");
+            dc_update_action();
         }
         else if (!dc_wait) {
             main_menu(dc_containers, &dc_containers_size, dc_images, &dc_images_size);
@@ -394,9 +392,9 @@ static void MX_TIM4_Init(void)
 
   /* USER CODE END TIM4_Init 1 */
   htim4.Instance = TIM4;
-  htim4.Init.Prescaler = 35999;
+  htim4.Init.Prescaler = 41999;
   htim4.Init.CounterMode = TIM_COUNTERMODE_UP;
-  htim4.Init.Period = 19999;
+  htim4.Init.Period = 59999;
   htim4.Init.ClockDivision = TIM_CLOCKDIVISION_DIV1;
   if (HAL_TIM_Base_Init(&htim4) != HAL_OK)
   {
@@ -468,7 +466,7 @@ static void MX_GPIO_Init(void)
   __HAL_RCC_GPIOD_CLK_ENABLE();
 
   /*Configure GPIO pin Output Level */
-  HAL_GPIO_WritePin(GPIOA, GPIO_PIN_1|GPIO_PIN_2|GPIO_PIN_3|GPIO_PIN_4
+  HAL_GPIO_WritePin(GPIOA, GPIO_PIN_1|GPIO_PIN_2|GPIO_PIN_3|GPIO_PIN_4 
                           |GPIO_PIN_5|GPIO_PIN_6|GPIO_PIN_7, GPIO_PIN_RESET);
 
   /*Configure GPIO pin Output Level */
@@ -483,9 +481,9 @@ static void MX_GPIO_Init(void)
   GPIO_InitStruct.Pull = GPIO_PULLDOWN;
   HAL_GPIO_Init(GPIOE, &GPIO_InitStruct);
 
-  /*Configure GPIO pins : PA1 PA2 PA3 PA4
+  /*Configure GPIO pins : PA1 PA2 PA3 PA4 
                            PA5 PA6 PA7 */
-  GPIO_InitStruct.Pin = GPIO_PIN_1|GPIO_PIN_2|GPIO_PIN_3|GPIO_PIN_4
+  GPIO_InitStruct.Pin = GPIO_PIN_1|GPIO_PIN_2|GPIO_PIN_3|GPIO_PIN_4 
                           |GPIO_PIN_5|GPIO_PIN_6|GPIO_PIN_7;
   GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
   GPIO_InitStruct.Pull = GPIO_NOPULL;

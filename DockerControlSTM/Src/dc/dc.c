@@ -26,6 +26,10 @@ image dc_images[20];
 uint8_t dc_new_stats = 0;
 struct stats dc_stats;
 
+uint8_t dc_alert = 0;
+uint8_t dc_update = 0;
+int16_t dc_since_update = 0;
+
 const uint8_t dc_cmd_copy_data(const uint8_t * const source, const uint16_t start, uint8_t * const destination) {
     uint8_t length;
     for (length = 0; source[length + start] != PACKET_DATA_DELIMITER && source[length + start] != PACKET_DATA_ARRAY_DELIMITER; length++);
@@ -141,6 +145,11 @@ void dc_add_data(const uint8_t * const data, const uint8_t size) {
     dc_data_size = size;
 }
 
+void dc_add_empty_data() {
+    static const uint8_t empty[0] = {};
+    dc_add_data(empty, 0);
+}
+
 void dc_add_data_container(const uint8_t * const container_index) {
     dc_add_data(dc_containers[*container_index].id, 64);
 }
@@ -175,11 +184,20 @@ void dc_make_body() {
     dc_body[5 + dc_data_size] = PACKET_END;
 }
 
-void dc_start(UART_HandleTypeDef * const huart) {
-    esp_start(huart);
+void dc_start_update_timer(TIM_HandleTypeDef * const htim) {
+    dc_since_update = -2 * DC_UPDATE_INTERVAL;
+    dc_update = 0;
+    HAL_TIM_Base_Start_IT(htim);
+    util_log("update timer started");
+}
+
+void dc_start(UART_HandleTypeDef * const huart_esp, TIM_HandleTypeDef * const htim_update) {
+    esp_start(huart_esp);
 
     cmd = READ;
-    dc_send(huart);
+    dc_send(huart_esp);
+
+    dc_start_update_timer(htim_update);
 }
 
 void dc_send(UART_HandleTypeDef * const huart) {
@@ -189,4 +207,19 @@ void dc_send(UART_HandleTypeDef * const huart) {
     esp_send_command(huart, dc_header, 10);
     esp_send_command(huart, dc_body, 6 + dc_data_size);
     dc_wait = 1;
+}
+
+void dc_update_callback() {
+    dc_since_update += DC_UPDATE_TIMER_INTERVAL;
+    if (dc_since_update >= DC_UPDATE_INTERVAL) {
+        dc_update = 1;
+        dc_since_update = -DC_UPDATE_TIMER_INTERVAL;
+    }
+}
+
+void dc_update_action() {
+    cmd = CALL;
+    dc_add_empty_data();
+    dc_set_ready();
+    dc_update = 0;
 }

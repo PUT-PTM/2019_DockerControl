@@ -25,6 +25,8 @@ extern UART_HandleTypeDef huart3;
 
 // dc
 extern enum DC_COMMAND_ENUM cmd;
+extern uint8_t dc_alert;
+extern uint8_t dc_update;
 
 // menu
 uint8_t menu_finished = 0;
@@ -74,6 +76,10 @@ int button_confirm() {
     else{
         return 0;
     }
+}
+
+const uint8_t menu_condition(const uint8_t condition) {
+    return condition && !dc_alert && !dc_update;
 }
 
 void update_screen() {
@@ -327,7 +333,7 @@ uint8_t main_menu_containers(uint8_t * const current_menu, const struct containe
     uint8_t show_containers_finished = 0;
     uint8_t action_performed = 0;
 
-    while(!show_containers_finished) {
+    while(menu_condition(!show_containers_finished)) {
         pulse_count = (uint8_t) TIM1->CNT;
         positions = (uint8_t) (pulse_count / 4);
         uint8_t i = positions % *size;
@@ -376,7 +382,7 @@ void main_menu(
     util_log("main menu begin");
     uint8_t current_menu = MAIN_START;
     menu_finished = 0;
-    while (!menu_finished) {
+    while (menu_condition(!menu_finished)) {
         pulse_count = (uint8_t) TIM1->CNT;
         positions = (uint8_t) (pulse_count / 4);
         switch (current_menu) {
@@ -399,10 +405,11 @@ void main_menu(
                 break;
         }
     }
+    util_log("main menu end");
 }
 
 uint8_t menu_container_action(const uint8_t * const container_index) {
-    while(!button_enter()) {
+    while(menu_condition(!button_enter())) {
         pulse_count = (uint8_t) TIM1->CNT;
         positions = (uint8_t) (pulse_count / 4);
         uint8_t i = positions % 4;
