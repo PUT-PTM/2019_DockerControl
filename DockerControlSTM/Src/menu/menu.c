@@ -406,14 +406,23 @@ void main_menu_alerts(uint8_t * const current_menu) {
 
 }
 
-void main_menu_stats(uint8_t * const current_menu) {
+void main_menu_stats(uint8_t * const current_menu, const struct stats * const stats) {
     uint8_t show_stats_finished = 0;
-
+    uint8_t stats_containers = 0;
     while(!show_stats_finished) {
 
-        menu_line(0, "Stats");
-        menu_line(1, "" );
+        if(stats_containers) {
+            menu_line(0, "Active: %3s Paused: %3s", stats->active_containers, stats->paused_containers);
+            menu_line(1, "Stopped: %3s", stats->stopped_containers);
+        }
+        else{
+            menu_line(0, "Images: %5s CPU: %3s", stats->images, stats->cpu);
+            menu_line(1, "Memory: %7s", stats->memory);
+        }
 
+        if(button_enter()){
+            stats_containers = !stats_containers;
+        }
         if (button_back()) {
             show_stats_finished = 1;
             *current_menu = MAIN_START;
@@ -423,7 +432,8 @@ void main_menu_stats(uint8_t * const current_menu) {
 
 void main_menu(
     const struct container * const containers, const uint8_t * const containers_size,
-    const image * const images, const uint8_t * const images_size
+    const image * const images, const uint8_t * const images_size,
+    const struct stats * const _stats
 ) {
     util_log("main menu begin");
     uint8_t current_menu = MAIN_START;
@@ -445,7 +455,7 @@ void main_menu(
                 main_menu_alerts(&current_menu);
                 break;
             case MAIN_STATS:
-                main_menu_stats(&current_menu);
+                main_menu_stats(&current_menu, _stats);
                 break;
             default:
                 break;
