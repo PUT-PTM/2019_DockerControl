@@ -158,81 +158,87 @@ void connection_menu_server(uint8_t * const current_menu) {
     uint8_t name[48];
     volatile uint8_t name_pos = 0;
     uint8_t character[1] = {0};
+    char temp;
     for(int i=0; i<48; i++) {
         name[i] = 0;
     }
 
-    character[0] = (uint8_t) (positions % 10 + 48);
-    char temp = (positions % 10 + 48);
-    menu_line(0, "Number: %c %c >%c< %c %c", temp-2, temp-1, temp, temp+1, temp+2);
-    menu_line(1, name);
+    while(!button_confirm()) {
+        pulse_count = (uint8_t) TIM1->CNT;
+        positions = (uint8_t) (pulse_count / 4);
+        character[0] = (uint8_t) (positions % 10 + 48);
+        temp = (positions % 10 + 48);
 
-    if (button_enter()) {
-        name[name_pos] = character[0];
-        name_pos++;
-    }
-    if (button_shift()) {
-        name[name_pos] = '.';
-        name_pos++;
-    }
-    if (button_back()) {
-        if(name_pos > 0) {
-            name_pos--;
-            name[name_pos] = ' ';
+        menu_line(0, "Number: %c %c >%c< %c %c", temp - 2, temp - 1, temp, temp + 1, temp + 2);
+        menu_line(1, name);
+
+        if (button_enter()) {
+            name[name_pos] = character[0];
+            name_pos++;
+        }
+        if (button_shift()) {
+            name[name_pos] = '.';
+            name_pos++;
+        }
+        if (button_back()) {
+            if (name_pos > 0) {
+                name_pos--;
+                name[name_pos] = ' ';
+            }
         }
     }
-
-    if (button_confirm()) {
-        switch (esp_param) {
-            case PARAM_IP:
-                strcpy(&server_ip, name);
-                break;
-            case PARAM_PORT:
-                strcpy(&server_port, name);
-                break;
-        }
-        *current_menu = MENU_CUSTOM;
+    switch (esp_param) {
+        case PARAM_IP:
+            strcpy(&server_ip, name);
+            break;
+        case PARAM_PORT:
+            strcpy(&server_port, name);
+            break;
     }
+    *current_menu = MENU_CUSTOM;
 }
 
 void connection_menu_wifi(uint8_t * const current_menu) {
     uint8_t name[48];
     volatile uint8_t name_pos = 0;
     uint8_t character[1] = {0};
+    char temp2;
     for(int i=0; i<48; i++) {
         name[i] = 0;
     }
 
-    character[0] = (uint8_t) ((positions % 26 + 65 + shift * 32));
-    char temp2 = (positions % 26 + 65 + shift * 32);
-    menu_line(0, "Letter: %c %c >%c< %c %c  %d", temp2-2, temp2-1, temp2, temp2+1, temp2+2, name_pos);
-    menu_line(1, name);
+    while(!button_confirm()) {
+        pulse_count = (uint8_t) TIM1->CNT;
+        positions = (uint8_t) (pulse_count / 4);
+        character[0] = (uint8_t) ((positions % 26 + 65 + shift * 32));
+        temp2 = (positions % 26 + 65 + shift * 32);
 
-    if (button_enter()) {
-        name[name_pos] = character[0];
-        name_pos++;
-    }
-    if (button_shift()) {
-        shift = !shift;
-    }
-    if (button_back()) {
-        if(name_pos > 0) {
-            name_pos--;
-            name[name_pos] = ' ';
+        menu_line(0, "Letter: %c %c >%c< %c %c  %d", temp2 - 2, temp2 - 1, temp2, temp2 + 1, temp2 + 2, name_pos);
+        menu_line(1, name);
+
+        if (button_enter()) {
+            name[name_pos] = character[0];
+            name_pos++;
+        }
+        if (button_shift()) {
+            shift = !shift;
+        }
+        if (button_back()) {
+            if (name_pos > 0) {
+                name_pos--;
+                name[name_pos] = ' ';
+            }
         }
     }
-
-    if (button_confirm()) {
-        switch (esp_param) {
-            case PARAM_NAME:
-                strcpy(&wifi_name, name);
-                break;
-            case PARAM_PASSWORD:
-                strcpy(&wifi_password, name);
-                break;
-        }
-        *current_menu = MENU_CUSTOM;
+    switch (esp_param) {
+        case PARAM_NAME:
+            strcpy(&wifi_name, name);
+            break;
+        case PARAM_PASSWORD:
+            strcpy(&wifi_password, name);
+            break;
     }
+    *current_menu = MENU_CUSTOM;
 }
 
 void connection_menu_start(uint8_t * const current_menu) {
