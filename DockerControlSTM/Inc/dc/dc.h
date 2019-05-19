@@ -31,7 +31,7 @@ void dc_add_data_image(const uint8_t * image_index);
 
 void dc_set_ready();
 
-void dc_start_session(UART_HandleTypeDef * huart);
+void dc_start(UART_HandleTypeDef * huart);
 
 void dc_send(UART_HandleTypeDef * huart);
 

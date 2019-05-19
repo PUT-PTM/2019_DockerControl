@@ -1,5 +1,5 @@
 #include "main.h"
-#include <string.h>
+#include "esp/esp_driver.h"
 #include "dc/dc.h"
 
 enum DC_COMMAND_ENUM cmd = ACKN;
@@ -175,9 +175,8 @@ void dc_make_body() {
     dc_body[5 + dc_data_size] = PACKET_END;
 }
 
-void dc_start_session(UART_HandleTypeDef * const huart) {
-    esp_init(huart);
-    esp_passthrough(huart);
+void dc_start(UART_HandleTypeDef * const huart) {
+    esp_start(huart);
 
     cmd = READ;
     dc_send(huart);

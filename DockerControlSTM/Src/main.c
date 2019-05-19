@@ -89,10 +89,8 @@ extern char wifi_password;
 
 // esp driver
 extern uint8_t packet_received;
-extern uint8_t received_packet_header[10];
-extern uint8_t received_packet_body[4096];
-
-extern enum esp_connection_state connection_state;
+extern uint8_t esp_received_packet_header[10];
+extern uint8_t esp_received_packet_body[4096];
 
 // dc
 extern enum DC_COMMAND_ENUM cmd;
@@ -105,14 +103,6 @@ extern uint8_t dc_new_images;
 extern uint8_t dc_images_size;
 extern image dc_images[];
 
-// uart
-uint8_t uart_receive[5];
-const uint16_t uart_size = 5;
-
-// usb
-uint8_t usb_data[40];
-uint8_t usb_received = 0;
-
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -123,38 +113,6 @@ static void MX_TIM1_Init(void);
 static void MX_TIM2_Init(void);
 static void MX_TIM4_Init(void);
 /* USER CODE BEGIN PFP */
-
-void start_dc() {
-    HAL_UART_Receive_IT(&huart3, uart_receive, uart_size);
-
-    dc_start_session(&huart3);
-
-    HAL_UART_AbortReceive_IT(&huart3);
-    HAL_UART_Receive_IT(&huart3, received_packet_header, sizeof(received_packet_header));
-}
-
-void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart) {
-    HAL_UART_AbortReceive_IT(huart);
-    HAL_GPIO_TogglePin(GPIOD, GPIO_PIN_13);
-    if(huart->Instance == USART3) {
-        switch (connection_state) {
-            case WAIT_HEADER:
-            {
-                const uint16_t body_size = esp_process_header();
-                HAL_UART_Receive_IT(huart, received_packet_body, body_size);
-            }
-                break;
-            case WAIT_BODY:
-                esp_process_body(huart);
-                HAL_UART_Receive_IT(huart, received_packet_header, sizeof(received_packet_header));
-                break;
-            case IDLE:
-                CDC_Transmit_FS(uart_receive, uart_size);
-                HAL_UART_Receive_IT(huart, uart_receive, uart_size);
-                break;
-        }
-    }
-}
 
 void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim) {
   HAL_GPIO_TogglePin(GPIOD, GPIO_PIN_13);
@@ -243,7 +201,8 @@ int main(void)
   util_log("DockerControl ready");
 
   connection_menu();
-  start_dc();
+  dc_start(&huart3);
+
   /* USER CODE END 2 */
 
   /* Infinite loop */
@@ -263,13 +222,9 @@ int main(void)
             util_log("got packet");
             dc_wait = 0;
 
-            dc_new_cmd(received_packet_header, received_packet_body);
+            dc_new_cmd(esp_received_packet_header, esp_received_packet_body);
 
             packet_received = 0;
-        }
-        else if (usb_received) {
-            HAL_UART_Transmit_IT(&huart3, usb_data, sizeof(usb_data));
-            usb_received = 0;
         }
         else if (!dc_wait) {
             main_menu(dc_containers, &dc_containers_size, dc_images, &dc_images_size);
