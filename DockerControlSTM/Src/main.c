@@ -243,50 +243,7 @@ int main(void)
   util_log("DockerControl ready");
 
   connection_menu();
-//  start_dc();
-
-//mock - ESP problems
-  memcpy(dc_containers[0].id, "42e4da71fbafbfff1c852d3c0460b451d4fd2946625aece758f688f31d3e6666", 65);
-  memcpy(dc_containers[0].name, "TEST_M_DB", 51);
-  memcpy(dc_containers[0].image, "mongo:3.4.10-jessie", 51);
-  memcpy(dc_containers[0].state, "exited", 11);
-  memcpy(dc_containers[0].status, "(0) 9h", 11);
-
-  memcpy(dc_containers[1].id, "6673dfa47a8c3c55e4d6f2522d70ecdf49065862921d60648e7f31ea6d9c0ba7", 65);
-  memcpy(dc_containers[1].name, "TEST_DB", 51);
-  memcpy(dc_containers[1].image, "mongo:3.4.10-jessie", 51);
-  memcpy(dc_containers[1].state, "exited", 11);
-  memcpy(dc_containers[1].status, "(0) 9h", 11);
-
-  memcpy(dc_containers[2].id, "938615e3a6e43724e3d5fa865a1219b74c40e3aee65f854d88897eb6aeacfb26", 65);
-  memcpy(dc_containers[2].name, "portainer-dev", 51);
-  memcpy(dc_containers[2].image, "portainer/portainer", 51);
-  memcpy(dc_containers[2].state, "running", 11);
-  memcpy(dc_containers[2].status, "up 2h", 11);
-
-  memcpy(dc_containers[3].id, "185b63f460a86879b714774377f8db42be9a675c8a6b981a9cf9ed04df5613d1", 65);
-  memcpy(dc_containers[3].name, "priceless_newton", 51);
-  memcpy(dc_containers[3].image, "portainer/portainer", 51);
-  memcpy(dc_containers[3].state, "exited", 11);
-  memcpy(dc_containers[3].status, "(2) 3d", 11);
-
-  memcpy(dc_containers[4].id, "abc3993d342153648adc28d833d973dc3684d2ac45680b13516aaafb952e9da0", 65);
-  memcpy(dc_containers[4].name, "pedantic_mirzakhani", 51);
-  memcpy(dc_containers[4].image, "portainer/portainer", 51);
-  memcpy(dc_containers[4].state, "exited", 11);
-  memcpy(dc_containers[4].status, "(1) 3d;", 11);
-
-
-  memcpy(dc_images[0], "portainer/portainer",50);
-  memcpy(dc_images[1], "mongo:3.4.10-jessie",50);
-  memcpy(dc_images[2], "ubuntu:16.4",50);
-  memcpy(dc_images[3], "portainer/portainer",50);
-
-
-  dc_new_containers = 1;
-  dc_containers_size = 5;
-  dc_images_size = 4;
-
+  start_dc();
 
   /* USER CODE END 2 */
 
