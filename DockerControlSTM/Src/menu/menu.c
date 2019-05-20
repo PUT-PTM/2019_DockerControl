@@ -164,81 +164,87 @@ void connection_menu_server(uint8_t * const current_menu) {
     uint8_t name[48];
     volatile uint8_t name_pos = 0;
     uint8_t character[1] = {0};
+    char temp;
     for(int i=0; i<48; i++) {
         name[i] = 0;
     }
 
-    character[0] = (uint8_t) (positions % 10 + 48);
-    char temp = (positions % 10 + 48);
-    menu_line(0, "Number: %c %c >%c< %c %c", temp-2, temp-1, temp, temp+1, temp+2);
-    menu_line(1, name);
+    while(!button_confirm()) {
+        pulse_count = (uint8_t) TIM1->CNT;
+        positions = (uint8_t) (pulse_count / 4);
+        character[0] = (uint8_t) (positions % 10 + 48);
+        temp = (positions % 10 + 48);
 
-    if (button_enter()) {
-        name[name_pos] = character[0];
-        name_pos++;
-    }
-    if (button_shift()) {
-        name[name_pos] = '.';
-        name_pos++;
-    }
-    if (button_back()) {
-        if(name_pos > 0) {
-            name_pos--;
-            name[name_pos] = ' ';
+        menu_line(0, "Number: %c %c >%c< %c %c", temp - 2, temp - 1, temp, temp + 1, temp + 2);
+        menu_line(1, name);
+
+        if (button_enter()) {
+            name[name_pos] = character[0];
+            name_pos++;
+        }
+        if (button_shift()) {
+            name[name_pos] = '.';
+            name_pos++;
+        }
+        if (button_back()) {
+            if (name_pos > 0) {
+                name_pos--;
+                name[name_pos] = ' ';
+            }
         }
     }
-
-    if (button_confirm()) {
-        switch (esp_param) {
-            case PARAM_IP:
-                strcpy(&server_ip, name);
-                break;
-            case PARAM_PORT:
-                strcpy(&server_port, name);
-                break;
-        }
-        *current_menu = MENU_CUSTOM;
+    switch (esp_param) {
+        case PARAM_IP:
+            strcpy(&server_ip, name);
+            break;
+        case PARAM_PORT:
+            strcpy(&server_port, name);
+            break;
     }
+    *current_menu = MENU_CUSTOM;
 }
 
 void connection_menu_wifi(uint8_t * const current_menu) {
     uint8_t name[48];
     volatile uint8_t name_pos = 0;
     uint8_t character[1] = {0};
+    char temp2;
     for(int i=0; i<48; i++) {
         name[i] = 0;
     }
 
-    character[0] = (uint8_t) ((positions % 26 + 65 + shift * 32));
-    char temp2 = (positions % 26 + 65 + shift * 32);
-    menu_line(0, "Letter: %c %c >%c< %c %c  %d", temp2-2, temp2-1, temp2, temp2+1, temp2+2, name_pos);
-    menu_line(1, name);
+    while(!button_confirm()) {
+        pulse_count = (uint8_t) TIM1->CNT;
+        positions = (uint8_t) (pulse_count / 4);
+        character[0] = (uint8_t) ((positions % 26 + 65 + shift * 32));
+        temp2 = (positions % 26 + 65 + shift * 32);
 
-    if (button_enter()) {
-        name[name_pos] = character[0];
-        name_pos++;
-    }
-    if (button_shift()) {
-        shift = !shift;
-    }
-    if (button_back()) {
-        if(name_pos > 0) {
-            name_pos--;
-            name[name_pos] = ' ';
+        menu_line(0, "Letter: %c %c >%c< %c %c  %d", temp2 - 2, temp2 - 1, temp2, temp2 + 1, temp2 + 2, name_pos);
+        menu_line(1, name);
+
+        if (button_enter()) {
+            name[name_pos] = character[0];
+            name_pos++;
+        }
+        if (button_shift()) {
+            shift = !shift;
+        }
+        if (button_back()) {
+            if (name_pos > 0) {
+                name_pos--;
+                name[name_pos] = ' ';
+            }
         }
     }
-
-    if (button_confirm()) {
-        switch (esp_param) {
-            case PARAM_NAME:
-                strcpy(&wifi_name, name);
-                break;
-            case PARAM_PASSWORD:
-                strcpy(&wifi_password, name);
-                break;
-        }
-        *current_menu = MENU_CUSTOM;
+    switch (esp_param) {
+        case PARAM_NAME:
+            strcpy(&wifi_name, name);
+            break;
+        case PARAM_PASSWORD:
+            strcpy(&wifi_password, name);
+            break;
     }
+    *current_menu = MENU_CUSTOM;
 }
 
 void connection_menu_start(uint8_t * const current_menu) {
@@ -354,9 +360,11 @@ uint8_t main_menu_containers(uint8_t * const current_menu, const struct containe
             if (action_performed) show_containers_finished = 1;
         }
         if (button_back()) {
-
+            *current_menu = MAIN_START;
+            show_containers_finished = 1;
         }
         if (button_confirm()) {
+            *current_menu = MAIN_START;
             show_containers_finished = 1;
         }
     }
@@ -364,20 +372,74 @@ uint8_t main_menu_containers(uint8_t * const current_menu, const struct containe
 }
 
 void main_menu_images(uint8_t * const current_menu, const image * const images, const uint8_t * const size) {
+    uint8_t show_images_finished = 0;
+    uint8_t action_performed = 0;
 
+    while(!show_images_finished) {
+        pulse_count = (uint8_t) TIM1->CNT;
+        positions = (uint8_t) (pulse_count / 4);
+        uint8_t i = positions % *size;
+
+        menu_line(0, (uint8_t *) "%s", images[i]);
+        menu_line(1, "      >create<");
+
+        if (button_back()) {
+            show_images_finished = 1;
+            *current_menu = MAIN_START;
+        }
+        if (button_confirm()) {
+            cmd = CCRT;
+            dc_set_ready();
+            *current_menu = MAIN_START;
+            show_images_finished = 1;
+        }
+    }
 }
 
 void main_menu_alerts(uint8_t * const current_menu) {
+    uint8_t show_alerts_finished = 0;
+
+    while(!show_alerts_finished) {
+
+        menu_line(0, "Alerts");
+        menu_line(1, "" );
+
+        if (button_back()) {
+            show_alerts_finished = 1;
+            *current_menu = MAIN_START;
+        }
+    }
 
 }
 
-void main_menu_stats(uint8_t * const current_menu) {
+void main_menu_stats(uint8_t * const current_menu, const struct stats * const stats) {
+    uint8_t show_stats_finished = 0;
+    uint8_t stats_containers = 0;
+    while(!show_stats_finished) {
 
+        if(stats_containers) {
+            menu_line(0, "Active: %3s Paused: %3s", stats->active_containers, stats->paused_containers);
+            menu_line(1, "Stopped: %3s", stats->stopped_containers);
+        }
+        else{
+            menu_line(0, "Images: %5s CPU: %3s", stats->images, stats->cpu);
+            menu_line(1, "Memory: %7s", stats->memory);
+        }
+
+        if(button_enter()){
+            stats_containers = !stats_containers;
+        }
+        if (button_back()) {
+            show_stats_finished = 1;
+            *current_menu = MAIN_START;
+        }
+    }
 }
 
 inline void main_menu(
     const struct container * const containers, const uint8_t * const containers_size,
-    const image * const images, const uint8_t * const images_size
+    const image * const images, const uint8_t * const images_size,
+    const struct stats * const _stats
 ) {
     util_log("main menu begin");
     uint8_t current_menu = MAIN_START;
@@ -399,7 +461,7 @@ inline void main_menu(
                 main_menu_alerts(&current_menu);
                 break;
             case MAIN_STATS:
-                main_menu_stats(&current_menu);
+                main_menu_stats(&current_menu, _stats);
                 break;
             default:
                 break;
@@ -419,11 +481,11 @@ uint8_t menu_container_action(const uint8_t * const container_index) {
                 menu_line(1, ">start restart stop del");
                 break;
             case 1:
-                cmd = CSTP;
+                cmd = CRST;
                 menu_line(1, " start>restart stop del");
                 break;
             case 2:
-                cmd = CRST;
+                cmd = CSTP;
                 menu_line(1, " start restart>stop del");
                 break;
             case 3:

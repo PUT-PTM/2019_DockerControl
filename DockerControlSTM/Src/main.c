@@ -102,6 +102,7 @@ extern uint8_t dc_new_images;
 extern uint8_t dc_images_size;
 extern image dc_images[];
 extern uint8_t dc_update;
+extern struct stats dc_stats;
 
 /* USER CODE END PV */
 
@@ -229,7 +230,7 @@ int main(void)
             dc_update_action();
         }
         else if (!dc_wait) {
-            main_menu(dc_containers, &dc_containers_size, dc_images, &dc_images_size);
+            main_menu(dc_containers, &dc_containers_size, dc_images, &dc_images_size, &dc_stats);
         }
 
     /* USER CODE END WHILE */
