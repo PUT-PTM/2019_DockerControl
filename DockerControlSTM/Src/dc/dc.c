@@ -55,6 +55,19 @@ void dc_set_session_id(const uint8_t * const packet_header) {
     util_log(dc_session_id);
 }
 
+void dc_ready_action(const uint8_t * const packet_header) {
+    dc_set_session_id(packet_header);
+    cmd = containers_cmd;
+    dc_add_empty_data();
+    dc_set_ready();
+}
+
+void dc_ackn_action() {
+    cmd = ACKN;
+    dc_add_empty_data();
+    dc_set_ready();
+}
+
 void dc_update_containers(const uint8_t * const packet_body) {
     dc_containers_size = 0;
     uint16_t i = PACKET_BODY_DATA_START;
@@ -128,23 +141,35 @@ void dc_resolve_cmd(const uint8_t * const packet_body) {
 void dc_apply_cmd(const uint8_t * const packet_header, const uint8_t * const packet_body) {
     switch (cmd) {
         case READ:
-            dc_set_session_id(packet_header);
-            cmd = containers_cmd;
-            dc_set_ready();
+            dc_ready_action(packet_header);
             break;
-        case ACKN:break;
+        case ACKN:
+            dc_ackn_action();
+            break;
         case CALL:
             dc_update_containers(packet_body);
             break;
         case CACT:
             dc_update_containers(packet_body);
             break;
-        case CSTS:break;
-        case CSTR:break;
-        case CSTP:break;
-        case CRST:break;
-        case CRMV:break;
-        case CCRT:break;
+        case CSTS:
+            dc_update_stats(packet_body);
+            break;
+        case CSTR:
+            // not receive
+            break;
+        case CSTP:
+            // not receive
+            break;
+        case CRST:
+            // not receive
+            break;
+        case CRMV:
+            // not receive
+            break;
+        case CCRT:
+            // not receive
+            break;
         case IALL:
             dc_update_images(packet_body);
             break;
@@ -154,7 +179,9 @@ void dc_apply_cmd(const uint8_t * const packet_header, const uint8_t * const pac
         case ALRT:
             dc_update_alerts(packet_body);
             break;
-        case ERRR:break;
+        case ERRR:
+            util_log((char*)packet_body);
+            break;
         default:break;
     }
 }

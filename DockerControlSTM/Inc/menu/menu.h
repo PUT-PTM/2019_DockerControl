@@ -38,6 +38,4 @@ void main_menu(const struct container * containers, const uint8_t * containers_s
                const image * images, const uint8_t * images_size,
                const struct stats * _stats);
 
-uint8_t menu_container_action(const uint8_t * container_index);
-
 #endif
