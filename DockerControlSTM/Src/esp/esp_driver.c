@@ -17,7 +17,7 @@ uint8_t esp_received_packet_body[4096];
 
 enum esp_connection_state esp_connection_state = IDLE;
 
-uint8_t packet_received = 0;
+uint8_t esp_packet_received = 0;
 
 uint8_t esp_uart_receive[5];
 const uint16_t esp_uart_size = 5;
@@ -71,7 +71,7 @@ void esp_init(UART_HandleTypeDef * const huart) {
     esp_send_def_command(huart, wifi);
     util_log(wifi);
 
-    HAL_Delay(15000);
+    HAL_Delay(8000);
 
     // get esp ip
     command = ESP_GET_IP;
@@ -117,7 +117,7 @@ const uint16_t esp_process_header() {
 }
 
 void esp_process_body() {
-    packet_received = 1;
+    esp_packet_received = 1;
     esp_connection_state = WAIT_HEADER;
 }
 
@@ -128,7 +128,7 @@ void esp_clear_uart_buff(UART_HandleTypeDef * const huart) {
     util_log("buffer cleared");
 }
 
-void esp_data_callback(UART_HandleTypeDef * const huart, uint8_t * const uart_receive, const uint16_t * const uart_size) {
+inline void esp_data_callback(UART_HandleTypeDef * const huart) {
     HAL_UART_AbortReceive_IT(huart);
     HAL_GPIO_TogglePin(GPIOD, GPIO_PIN_13);
     if(huart->Instance == USART3) {
@@ -144,12 +144,10 @@ void esp_data_callback(UART_HandleTypeDef * const huart, uint8_t * const uart_re
                 HAL_UART_Receive_IT(huart, esp_received_packet_header, sizeof(esp_received_packet_header));
                 break;
             case IDLE:
-                CDC_Transmit_FS(uart_receive, *uart_size);
-                HAL_UART_Receive_IT(huart, uart_receive, *uart_size);
+                CDC_Transmit_FS(esp_uart_receive, esp_uart_size);
+                HAL_UART_Receive_IT(huart, esp_uart_receive, esp_uart_size);
                 break;
-            default:
-                util_log("unknown esp state");
-                break;
+            default:break;
         }
     }
 }
@@ -171,8 +169,4 @@ void esp_send_command(UART_HandleTypeDef * huart, uint8_t * const command, const
 
 void esp_send_def_command(UART_HandleTypeDef * huart, const char * const command) {
     esp_send_command(huart, (uint8_t *) command, (const uint16_t) strlen(command));
-}
-
-void HAL_UART_RxCpltCallback(UART_HandleTypeDef * huart) {
-    esp_data_callback(huart, esp_uart_receive, &esp_uart_size);
 }

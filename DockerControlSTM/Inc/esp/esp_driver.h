@@ -11,4 +11,6 @@ void esp_send_command(UART_HandleTypeDef * huart, uint8_t * command, uint16_t si
 
 void esp_send_def_command(UART_HandleTypeDef * huart, const char * command);
 
+void esp_data_callback(UART_HandleTypeDef * huart);
+
 #endif //HELLO_WIFI_ESP_DRIVER_H

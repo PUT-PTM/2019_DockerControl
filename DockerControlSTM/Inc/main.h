@@ -56,6 +56,8 @@ extern "C" {
 #include <stdlib.h>
 #include <string.h>
 
+#include <tm/tm_stm32_hd44780.h>
+#include <esp/esp_driver.h>
 #include <dc/dc.h>
 #include <dc/dc_commands.h>
 #include <utils.h>

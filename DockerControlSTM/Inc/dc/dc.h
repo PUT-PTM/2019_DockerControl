@@ -22,6 +22,8 @@ struct stats {
     uint8_t memory[7];
 };
 
+typedef uint8_t alert[65];
+
 #define DC_UPDATE_TIMER_INTERVAL 30
 #define DC_UPDATE_INTERVAL 30
 

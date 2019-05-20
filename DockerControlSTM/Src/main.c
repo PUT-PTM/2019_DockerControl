@@ -47,7 +47,6 @@
 
 #include "usbd_cdc_if.h"
 
-#include "hd44780.h"
 #include "menu/menu.h"
 /* USER CODE END Includes */
 
@@ -88,7 +87,7 @@ extern char wifi_name;
 extern char wifi_password;
 
 // esp driver
-extern uint8_t packet_received;
+extern uint8_t esp_packet_received;
 extern uint8_t esp_received_packet_header[10];
 extern uint8_t esp_received_packet_body[4096];
 
@@ -114,6 +113,10 @@ static void MX_TIM1_Init(void);
 static void MX_TIM2_Init(void);
 static void MX_TIM4_Init(void);
 /* USER CODE BEGIN PFP */
+
+void HAL_UART_RxCpltCallback(UART_HandleTypeDef * huart) {
+    esp_data_callback(huart);
+}
 
 void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim) {
   HAL_GPIO_TogglePin(GPIOD, GPIO_PIN_13);
@@ -189,7 +192,8 @@ int main(void)
   util_log("DockerControl init");
 
   HAL_TIM_Encoder_Start(&htim1, TIM_CHANNEL_ALL);
-  hd44780_init(GPIOA, GPIO_PIN_1, GPIO_PIN_2, GPIO_PIN_3, GPIO_PIN_4, GPIO_PIN_5, GPIO_PIN_6, GPIO_PIN_7, HD44780_LINES_2, HD44780_FONT_5x8);
+//  hd44780_init(GPIOA, GPIO_PIN_1, GPIO_PIN_2, GPIO_PIN_3, GPIO_PIN_4, GPIO_PIN_5, GPIO_PIN_6, GPIO_PIN_7, HD44780_LINES_2, HD44780_FONT_5x8);
+  TM_HD44780_Init(20, 2); // TODO: check size @Maciej
 
   HAL_GPIO_WritePin(GPIOD, GPIO_PIN_12, GPIO_PIN_SET);
   util_log("DockerControl ready");
@@ -209,19 +213,20 @@ int main(void)
     while (1)
     {
         if (dc_ready) {
+            util_log("dc_ready action");
+
             dc_send(&huart3);
             dc_ready = 0;
         }
-        else if (packet_received) {
-            util_log("got packet");
+        else if (esp_packet_received) {
+            util_log("esp_packet_received action");
             dc_wait = 0;
-
             dc_new_cmd(esp_received_packet_header, esp_received_packet_body);
 
-            packet_received = 0;
+            esp_packet_received = 0;
         }
         else if (dc_update) {
-            util_log("updating containers");
+            util_log("dc_update action");
             dc_update_action();
         }
         else if (!dc_wait) {
