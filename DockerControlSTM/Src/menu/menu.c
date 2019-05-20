@@ -84,16 +84,10 @@ static inline const uint8_t menu_condition(const uint8_t condition) {
     return condition && !dc_alert && !dc_update && !esp_packet_received;
 }
 
-void update_screen() { // TODO: @Maciej test
-//    hd44780_clear();
-//    hd44780_position(0, 1);
-//    hd44780_printf("%s", menu_first_line);
-//    hd44780_position(1, 1);
-//    hd44780_printf("%s", menu_second_line);
-
+void update_screen() {
     TM_HD44780_Clear();
-    TM_HD44780_Puts(0, 1, menu_first_line);
-    TM_HD44780_Puts(1, 1, menu_second_line);
+    TM_HD44780_Puts(0, 0, menu_first_line);
+    TM_HD44780_Puts(0, 1, menu_second_line);
 }
 
 void menu_line(uint8_t line, char *format, ...) {
@@ -137,16 +131,16 @@ void connection_menu_custom(uint8_t * const current_menu) {
             }
             break;
         case 2:
-            menu_line(0, ">WiFi Name: %s", &wifi_name);
-            menu_line(1, " WiFi Password: %s", &wifi_password);
+            menu_line(0, ">Name: %s", &wifi_name);
+            menu_line(1, " Pass: %s", &wifi_password);
             if (button_enter()) {
                 esp_param = PARAM_NAME;
                 *current_menu = MENU_CUSTOM_WIFI;
             }
             break;
         case 3:
-            menu_line(0, " WiFi Name: %s", &wifi_name);
-            menu_line(1, ">WiFi Password: %s", &wifi_password);
+            menu_line(0, " Name: %s", &wifi_name);
+            menu_line(1, ">Pass: %s", &wifi_password);
             if (button_enter()) {
                 esp_param = PARAM_PASSWORD;
                 *current_menu = MENU_CUSTOM_WIFI;

@@ -192,8 +192,7 @@ int main(void)
   util_log("DockerControl init");
 
   HAL_TIM_Encoder_Start(&htim1, TIM_CHANNEL_ALL);
-//  hd44780_init(GPIOA, GPIO_PIN_1, GPIO_PIN_2, GPIO_PIN_3, GPIO_PIN_4, GPIO_PIN_5, GPIO_PIN_6, GPIO_PIN_7, HD44780_LINES_2, HD44780_FONT_5x8);
-  TM_HD44780_Init(20, 2); // TODO: check size @Maciej
+  TM_HD44780_Init(24, 2);
 
   HAL_GPIO_WritePin(GPIOD, GPIO_PIN_12, GPIO_PIN_SET);
   util_log("DockerControl ready");
