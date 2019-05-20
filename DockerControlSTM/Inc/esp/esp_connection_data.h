@@ -3,10 +3,10 @@
 
 // define default connection parameters here
 
-#define DEFAULT_WIFI_NAME "wifi"
-#define DEFAULT_WIFI_PASSWORD "wifi_pass"
+#define DEFAULT_WIFI_NAME "JR_Note"
+#define DEFAULT_WIFI_PASSWORD "zqoz2295"
 
-#define DEFAULT_SERVER_IP "ip"
-#define DEFAULT_SERVER_PORT "port"
+#define DEFAULT_SERVER_IP "192.168.43.29"
+#define DEFAULT_SERVER_PORT "1500"
 
 #endif //DOCKERCONTROLSTM_ESP_CONNECTION_DATA_H

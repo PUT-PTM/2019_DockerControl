@@ -375,7 +375,7 @@ void main_menu_images(uint8_t * const current_menu, const image * const images, 
     uint8_t show_images_finished = 0;
     uint8_t action_performed = 0;
 
-    while(!show_images_finished) {
+    while(menu_condition(!show_images_finished)) {
         pulse_count = (uint8_t) TIM1->CNT;
         positions = (uint8_t) (pulse_count / 4);
         uint8_t i = positions % *size;
@@ -399,7 +399,7 @@ void main_menu_images(uint8_t * const current_menu, const image * const images, 
 void main_menu_alerts(uint8_t * const current_menu) {
     uint8_t show_alerts_finished = 0;
 
-    while(!show_alerts_finished) {
+    while(menu_condition(!show_alerts_finished)) {
 
         menu_line(0, "Alerts");
         menu_line(1, "" );
@@ -410,12 +410,14 @@ void main_menu_alerts(uint8_t * const current_menu) {
         }
     }
 
+    dc_clear_alerts();
+
 }
 
 void main_menu_stats(uint8_t * const current_menu, const struct stats * const stats) {
     uint8_t show_stats_finished = 0;
     uint8_t stats_containers = 0;
-    while(!show_stats_finished) {
+    while(menu_condition(!show_stats_finished)) {
 
         if(stats_containers) {
             menu_line(0, "Active: %3s Paused: %3s", stats->active_containers, stats->paused_containers);
