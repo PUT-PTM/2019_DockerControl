@@ -35,6 +35,8 @@ void dc_add_empty_data();
 void dc_add_data_container(const uint8_t * container_index);
 void dc_add_data_image(const uint8_t * image_index);
 
+void dc_clear_alerts();
+
 void dc_set_ready();
 
 void dc_start(UART_HandleTypeDef * huart_esp, TIM_HandleTypeDef * htim_update);

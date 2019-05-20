@@ -100,6 +100,10 @@ void dc_update_alerts(const uint8_t * const packet_body) {
     dc_alert = 0;
 }
 
+void dc_clear_alerts() {
+    dc_alerts_size = 0;
+}
+
 void dc_new_cmd(const uint8_t * const packet_header, const uint8_t * const packet_body) {
     dc_resolve_cmd(packet_body);
     util_log(DC_COMMAND_STRING[cmd]);
