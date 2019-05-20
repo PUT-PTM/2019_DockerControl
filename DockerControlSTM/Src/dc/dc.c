@@ -30,6 +30,9 @@ alert dc_alerts[20];
 
 uint8_t dc_update = 0;
 int16_t dc_since_update = 0;
+uint8_t dc_containers_update = 0;
+uint8_t dc_images_update = 0;
+uint8_t dc_stats_update = 0;
 
 const uint8_t dc_cmd_copy_data_condition(const uint8_t * const d) {
     if (*d != PACKET_DATA_DELIMITER && *d != PACKET_DATA_ARRAY_DELIMITER && *d != PACKET_END) return 1;
@@ -41,6 +44,22 @@ const uint8_t dc_cmd_copy_data(const uint8_t * const source, const uint16_t star
     for (length = 0; dc_cmd_copy_data_condition(&(source[length + start])); length++);
     memcpy(destination, source + start, length);
     return length;
+}
+
+void dc_start_update(TIM_HandleTypeDef * const htim) {
+    dc_since_update = -5 * DC_UPDATE_INTERVAL;
+    dc_update_callback();
+    HAL_TIM_Base_Start_IT(htim);
+    util_log("update timer started");
+}
+
+void dc_start(UART_HandleTypeDef * const huart_esp, TIM_HandleTypeDef * const htim_update) {
+    esp_start(huart_esp);
+
+    cmd = READ;
+    dc_send(huart_esp);
+
+    dc_start_update(htim_update);
 }
 
 void dc_cmd_get_data(const uint8_t * const packet_body, uint16_t * const i, uint8_t * const destination) {
@@ -57,9 +76,8 @@ void dc_set_session_id(const uint8_t * const packet_header) {
 
 void dc_ready_action(const uint8_t * const packet_header) {
     dc_set_session_id(packet_header);
-    cmd = containers_cmd;
-    dc_add_empty_data();
-    dc_set_ready();
+    dc_since_update = DC_UPDATE_INTERVAL;
+    dc_update_callback();
 }
 
 void dc_ackn_action() {
@@ -230,22 +248,6 @@ void dc_make_body() {
     dc_body[5 + dc_data_size] = PACKET_END;
 }
 
-void dc_start_update_timer(TIM_HandleTypeDef * const htim) {
-    dc_since_update = -2 * DC_UPDATE_INTERVAL;
-    dc_update = 0;
-    HAL_TIM_Base_Start_IT(htim);
-    util_log("update timer started");
-}
-
-void dc_start(UART_HandleTypeDef * const huart_esp, TIM_HandleTypeDef * const htim_update) {
-    esp_start(huart_esp);
-
-    cmd = READ;
-    dc_send(huart_esp);
-
-    dc_start_update_timer(htim_update);
-}
-
 void dc_send(UART_HandleTypeDef * const huart) {
     util_log("sending packet");
     dc_make_body();
@@ -255,19 +257,42 @@ void dc_send(UART_HandleTypeDef * const huart) {
     dc_wait = 1;
 }
 
-void dc_update_callback() {
+inline void dc_update_callback() {
     dc_since_update += DC_UPDATE_TIMER_INTERVAL;
     if (dc_since_update >= DC_UPDATE_INTERVAL) {
-        dc_update = 1;
-        dc_since_update = -DC_UPDATE_TIMER_INTERVAL;
+        if (!dc_update) {
+            dc_update = 1;
+            dc_containers_update = 1;
+            dc_images_update = 1;
+            dc_stats_update = 1;
+            dc_since_update = 0;
+        }
     }
 }
 
-void dc_update_action() {
-    cmd = containers_cmd;
-    dc_add_empty_data();
-    dc_set_ready();
-    dc_update = 0;
+inline void dc_update_action() {
+    if (dc_containers_update) {
+        cmd = containers_cmd;
+        dc_add_empty_data();
+        dc_set_ready();
+        dc_containers_update = 0;
+    }
+    else if (dc_images_update) {
+        cmd = IALL;
+        dc_add_empty_data();
+        dc_set_ready();
+        dc_images_update = 0;
+    }
+    else if (dc_stats_update) {
+        cmd = SSTS;
+        dc_add_empty_data();
+        dc_set_ready();
+        dc_stats_update = 0;
+    }
+    else {
+        dc_update = 0;
+    }
+    dc_wait = 1;
 }
 
 void dc_set_containers_update_all() {
