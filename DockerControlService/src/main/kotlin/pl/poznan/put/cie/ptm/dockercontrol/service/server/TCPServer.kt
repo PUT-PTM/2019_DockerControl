@@ -2,36 +2,42 @@ package pl.poznan.put.cie.ptm.dockercontrol.service.server
 
 import io.ktor.network.selector.ActorSelectorManager
 import io.ktor.network.sockets.aSocket
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.*
 import pl.poznan.put.cie.ptm.dockercontrol.service.utils.Logger
 import pl.poznan.put.cie.ptm.dockercontrol.service.utils.Resources
 import java.net.InetSocketAddress
+import io.ktor.network.sockets.Socket
+import io.ktor.util.KtorExperimentalAPI
+import pl.poznan.put.cie.ptm.dockercontrol.service.service.AlertsService
+import java.time.Instant
+import java.time.temporal.ChronoUnit
 
-object TCPServer {
-    private val IP = Resources.getString("server", "ip")
-    private val PORT = Resources.getInt( "server", "port")
+@KtorExperimentalAPI
+class TCPServer {
+    private val ip = Resources.getString("server", "ip")
+    private val port = Resources.getInt( "server", "port")
 
     private val sessions =  mutableMapOf<Int, Session>()
     private var lastId = 0
 
     private val actorsSelectorManager = ActorSelectorManager(Dispatchers.IO)
     private val socketBuilder = aSocket(actorsSelectorManager).tcp()
-    private val socket = socketBuilder.bind(InetSocketAddress(IP, PORT))
+    private val socket = socketBuilder.bind(InetSocketAddress(ip, port))
 
-    fun start() {
-        runBlocking {
-            Logger.log("Started tcp server at ${socket.localAddress}")
-            while (true) accept()
-        }
+    suspend fun accept(scope: CoroutineScope): Session {
+        val connection = socket.accept()
+        return createSession(connection, scope)
     }
 
-    private suspend fun accept() {
-        val connection = socket.accept()
-
+    private fun createSession(connection: Socket, scope: CoroutineScope): Session {
         val id = ++lastId
-        Logger.log("new session: $id, remote: ${connection.remoteAddress}")
         val session = Session(id, connection)
         sessions[id] = session
+
+        scope.launch { session.start() }
+        Logger.log("new session: $id, remote: ${connection.remoteAddress}")
+        return session
     }
+
+    fun getAddress() = socket.localAddress
 }

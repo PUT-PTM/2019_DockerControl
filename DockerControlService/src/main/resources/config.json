@@ -4,7 +4,7 @@
     "port": 1500
   },
   "docker": {
-    "host": "192.168.1.251",
+    "host": "localhost",
     "port": 2375
   }
 }

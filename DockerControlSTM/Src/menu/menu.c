@@ -1,4 +1,3 @@
-#include <hd44780.h>
 #include <stdarg.h>
 #include "menu/menu.h"
 #include "main.h"
@@ -25,6 +24,11 @@ extern UART_HandleTypeDef huart3;
 
 // dc
 extern enum DC_COMMAND_ENUM cmd;
+extern uint8_t dc_alert;
+extern uint8_t dc_update;
+
+// esp
+extern uint8_t esp_packet_received;
 
 // menu
 uint8_t menu_finished = 0;
@@ -76,12 +80,14 @@ int button_confirm() {
     }
 }
 
+static inline const uint8_t menu_condition(const uint8_t condition) {
+    return condition && !dc_update && !esp_packet_received;
+}
+
 void update_screen() {
-    hd44780_clear();
-    hd44780_position(0, 1);
-    hd44780_printf("%s", menu_first_line);
-    hd44780_position(1, 1);
-    hd44780_printf("%s", menu_second_line);
+    TM_HD44780_Clear();
+    TM_HD44780_Puts(0, 0, menu_first_line);
+    TM_HD44780_Puts(0, 1, menu_second_line);
 }
 
 void menu_line(uint8_t line, char *format, ...) {
@@ -125,16 +131,16 @@ void connection_menu_custom(uint8_t * const current_menu) {
             }
             break;
         case 2:
-            menu_line(0, ">WiFi Name: %s", &wifi_name);
-            menu_line(1, " WiFi Password: %s", &wifi_password);
+            menu_line(0, ">Name: %s", &wifi_name);
+            menu_line(1, " Pass: %s", &wifi_password);
             if (button_enter()) {
                 esp_param = PARAM_NAME;
                 *current_menu = MENU_CUSTOM_WIFI;
             }
             break;
         case 3:
-            menu_line(0, " WiFi Name: %s", &wifi_name);
-            menu_line(1, ">WiFi Password: %s", &wifi_password);
+            menu_line(0, " Name: %s", &wifi_name);
+            menu_line(1, ">Pass: %s", &wifi_password);
             if (button_enter()) {
                 esp_param = PARAM_PASSWORD;
                 *current_menu = MENU_CUSTOM_WIFI;
@@ -333,7 +339,7 @@ uint8_t main_menu_containers(uint8_t * const current_menu, const struct containe
     uint8_t show_containers_finished = 0;
     uint8_t action_performed = 0;
 
-    while(!show_containers_finished) {
+    while(menu_condition(!show_containers_finished)) {
         pulse_count = (uint8_t) TIM1->CNT;
         positions = (uint8_t) (pulse_count / 4);
         uint8_t i = positions % *size;
@@ -369,7 +375,7 @@ void main_menu_images(uint8_t * const current_menu, const image * const images, 
     uint8_t show_images_finished = 0;
     uint8_t action_performed = 0;
 
-    while(!show_images_finished) {
+    while(menu_condition(!show_images_finished)) {
         pulse_count = (uint8_t) TIM1->CNT;
         positions = (uint8_t) (pulse_count / 4);
         uint8_t i = positions % *size;
@@ -393,7 +399,7 @@ void main_menu_images(uint8_t * const current_menu, const image * const images, 
 void main_menu_alerts(uint8_t * const current_menu) {
     uint8_t show_alerts_finished = 0;
 
-    while(!show_alerts_finished) {
+    while(menu_condition(!show_alerts_finished)) {
 
         menu_line(0, "Alerts");
         menu_line(1, "" );
@@ -404,12 +410,14 @@ void main_menu_alerts(uint8_t * const current_menu) {
         }
     }
 
+    dc_clear_alerts();
+
 }
 
 void main_menu_stats(uint8_t * const current_menu, const struct stats * const stats) {
     uint8_t show_stats_finished = 0;
     uint8_t stats_containers = 0;
-    while(!show_stats_finished) {
+    while(menu_condition(!show_stats_finished)) {
 
         if(stats_containers) {
             menu_line(0, "Active: %3s Paused: %3s", stats->active_containers, stats->paused_containers);
@@ -430,7 +438,7 @@ void main_menu_stats(uint8_t * const current_menu, const struct stats * const st
     }
 }
 
-void main_menu(
+inline void main_menu(
     const struct container * const containers, const uint8_t * const containers_size,
     const image * const images, const uint8_t * const images_size,
     const struct stats * const _stats
@@ -438,7 +446,7 @@ void main_menu(
     util_log("main menu begin");
     uint8_t current_menu = MAIN_START;
     menu_finished = 0;
-    while (!menu_finished) {
+    while (menu_condition(!menu_finished)) {
         pulse_count = (uint8_t) TIM1->CNT;
         positions = (uint8_t) (pulse_count / 4);
         switch (current_menu) {
@@ -461,10 +469,11 @@ void main_menu(
                 break;
         }
     }
+    util_log("main menu end");
 }
 
 uint8_t menu_container_action(const uint8_t * const container_index) {
-    while(!button_enter()) {
+    while(menu_condition(!button_enter())) {
         pulse_count = (uint8_t) TIM1->CNT;
         positions = (uint8_t) (pulse_count / 4);
         uint8_t i = positions % 4;

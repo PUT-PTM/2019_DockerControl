@@ -1,5 +1,5 @@
 #include "main.h"
-#include <string.h>
+#include "esp/esp_driver.h"
 #include "dc/dc.h"
 
 enum DC_COMMAND_ENUM cmd = ACKN;
@@ -15,16 +15,19 @@ uint8_t dc_body[4096];
 uint8_t dc_data_size = 0;
 uint8_t dc_data[4090];
 
-uint8_t dc_new_containers = 0;
 uint8_t dc_containers_size = 0;
 struct container dc_containers[20];
 
-uint8_t dc_new_images = 0;
 uint8_t dc_images_size = 0;
 image dc_images[20];
 
-uint8_t dc_new_stats = 0;
 struct stats dc_stats;
+
+uint8_t dc_alerts_size = 0;
+alert dc_alerts[20];
+
+uint8_t dc_update = 0;
+int16_t dc_since_update = 0;
 
 const uint8_t dc_cmd_copy_data_condition(const uint8_t * const d) {
     if (*d != PACKET_DATA_DELIMITER && *d != PACKET_DATA_ARRAY_DELIMITER && *d != PACKET_END) return 1;
@@ -64,7 +67,6 @@ void dc_update_containers(const uint8_t * const packet_body) {
 
         dc_containers_size++;
     }
-    dc_new_containers = 1;
 }
 
 void dc_update_images(const uint8_t * const packet_body) {
@@ -74,7 +76,6 @@ void dc_update_images(const uint8_t * const packet_body) {
         dc_cmd_get_data(packet_body, &i, dc_images[dc_images_size]);
         dc_images_size++;
     }
-    dc_new_images = 1;
 }
 
 void dc_update_stats(const uint8_t * const packet_body) {
@@ -85,12 +86,25 @@ void dc_update_stats(const uint8_t * const packet_body) {
     dc_cmd_get_data(packet_body, &i, dc_stats.images);
     dc_cmd_get_data(packet_body, &i, dc_stats.cpu);
     dc_cmd_get_data(packet_body, &i, dc_stats.memory);
+}
 
-    dc_new_stats = 1;
+void dc_update_alerts(const uint8_t * const packet_body) {
+    util_log("update alerts");
+    dc_alerts_size = 0;
+    uint16_t i = PACKET_BODY_DATA_START;
+    while (packet_body[i] != PACKET_END) {
+        dc_cmd_get_data(packet_body, &i, dc_alerts[dc_alerts_size]);
+        dc_alerts_size++;
+    }
+}
+
+void dc_clear_alerts() {
+    dc_alerts_size = 0;
 }
 
 void dc_new_cmd(const uint8_t * const packet_header, const uint8_t * const packet_body) {
     dc_resolve_cmd(packet_body);
+    util_log(DC_COMMAND_STRING[cmd]);
     dc_apply_cmd(packet_header, packet_body);
 }
 
@@ -135,7 +149,9 @@ void dc_apply_cmd(const uint8_t * const packet_header, const uint8_t * const pac
         case SSTS:
             dc_update_stats(packet_body);
             break;
-        case ALRT:break;
+        case ALRT:
+            dc_update_alerts(packet_body);
+            break;
         case ERRR:break;
         default:break;
     }
@@ -144,6 +160,11 @@ void dc_apply_cmd(const uint8_t * const packet_header, const uint8_t * const pac
 void dc_add_data(const uint8_t * const data, const uint8_t size) {
     memcpy(dc_data, data, size);
     dc_data_size = size;
+}
+
+void dc_add_empty_data() {
+    static const uint8_t empty[0] = {};
+    dc_add_data(empty, 0);
 }
 
 void dc_add_data_container(const uint8_t * const container_index) {
@@ -180,19 +201,42 @@ void dc_make_body() {
     dc_body[5 + dc_data_size] = PACKET_END;
 }
 
-void dc_start_session(UART_HandleTypeDef * const huart) {
-    esp_init(huart);
-    esp_passthrough(huart);
+void dc_start_update_timer(TIM_HandleTypeDef * const htim) {
+    dc_since_update = -2 * DC_UPDATE_INTERVAL;
+    dc_update = 0;
+    HAL_TIM_Base_Start_IT(htim);
+    util_log("update timer started");
+}
+
+void dc_start(UART_HandleTypeDef * const huart_esp, TIM_HandleTypeDef * const htim_update) {
+    esp_start(huart_esp);
 
     cmd = READ;
-    dc_send(huart);
+    dc_send(huart_esp);
+
+    dc_start_update_timer(htim_update);
 }
 
 void dc_send(UART_HandleTypeDef * const huart) {
-    util_log("sending package");
+    util_log("sending packet");
     dc_make_body();
     dc_make_header();
     esp_send_command(huart, dc_header, 10);
     esp_send_command(huart, dc_body, 6 + dc_data_size);
     dc_wait = 1;
+}
+
+void dc_update_callback() {
+    dc_since_update += DC_UPDATE_TIMER_INTERVAL;
+    if (dc_since_update >= DC_UPDATE_INTERVAL) {
+        dc_update = 1;
+        dc_since_update = -DC_UPDATE_TIMER_INTERVAL;
+    }
+}
+
+void dc_update_action() {
+    cmd = CALL;
+    dc_add_empty_data();
+    dc_set_ready();
+    dc_update = 0;
 }

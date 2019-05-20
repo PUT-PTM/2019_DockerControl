@@ -4,6 +4,7 @@
 #include "main.h"
 #include "utils.h"
 #include <stdlib.h>
+#include "usbd_cdc_if.h"
 
 char server_ip[15] = DEFAULT_SERVER_IP;
 char server_port[5] = DEFAULT_SERVER_PORT;
@@ -11,12 +12,22 @@ char server_port[5] = DEFAULT_SERVER_PORT;
 char wifi_name[100] = DEFAULT_WIFI_NAME;
 char wifi_password[100] = DEFAULT_WIFI_PASSWORD;
 
-uint8_t received_packet_header[10];
-uint8_t received_packet_body[4096];
+uint8_t esp_received_packet_header[10];
+uint8_t esp_received_packet_body[4096];
 
-enum esp_connection_state connection_state = IDLE;
+enum esp_connection_state esp_connection_state = IDLE;
 
-uint8_t packet_received = 0;
+uint8_t esp_packet_received = 0;
+
+uint8_t esp_uart_receive[5];
+const uint16_t esp_uart_size = 5;
+
+void esp_test(UART_HandleTypeDef * const huart) {
+    esp_send_def_command(huart, ESP_TEST);
+    util_log(ESP_TEST);
+    HAL_GPIO_TogglePin(GPIOD, GPIO_PIN_15);
+    HAL_Delay(200);
+}
 
 void esp_wait(UART_HandleTypeDef * const huart) {
     util_log("waiting for esp...");
@@ -60,7 +71,7 @@ void esp_init(UART_HandleTypeDef * const huart) {
     esp_send_def_command(huart, wifi);
     util_log(wifi);
 
-    HAL_Delay(10000);
+    HAL_Delay(8000);
 
     // get esp ip
     command = ESP_GET_IP;
@@ -70,22 +81,6 @@ void esp_init(UART_HandleTypeDef * const huart) {
     HAL_Delay(1000);
 
     util_log("esp ready");
-}
-
-void esp_send_command(UART_HandleTypeDef * huart, uint8_t * const command, const uint16_t size) {
-    HAL_UART_Transmit_IT(huart, command, size);
-    HAL_Delay(200);
-}
-
-void esp_send_def_command(UART_HandleTypeDef * huart, const char * const command) {
-    esp_send_command(huart, (uint8_t *) command, (const uint16_t) strlen(command));
-}
-
-void esp_test(UART_HandleTypeDef * const huart) {
-    esp_send_def_command(huart, ESP_TEST);
-    util_log(ESP_TEST);
-    HAL_GPIO_TogglePin(GPIOD, GPIO_PIN_15);
-    HAL_Delay(200);
 }
 
 void esp_passthrough(UART_HandleTypeDef * const huart) {
@@ -110,20 +105,20 @@ void esp_passthrough(UART_HandleTypeDef * const huart) {
     HAL_Delay(1500);
 
     util_log("esp in passthrough");
-    connection_state = WAIT_HEADER;
+    esp_connection_state = WAIT_HEADER;
 }
 
 const uint16_t esp_process_header() {
     char body_size_string[4];
-    memcpy(body_size_string, &received_packet_header[5], 4);
+    memcpy(body_size_string, &esp_received_packet_header[5], 4);
     const uint16_t body_size = (uint16_t) atoi(body_size_string);
-    connection_state = WAIT_BODY;
+    esp_connection_state = WAIT_BODY;
     return body_size;
 }
 
 void esp_process_body() {
-    packet_received = 1;
-    connection_state = WAIT_HEADER;
+    esp_packet_received = 1;
+    esp_connection_state = WAIT_HEADER;
 }
 
 void esp_clear_uart_buff(UART_HandleTypeDef * const huart) {
@@ -131,4 +126,47 @@ void esp_clear_uart_buff(UART_HandleTypeDef * const huart) {
     uint8_t mock[1];
     while (HAL_UART_Receive(huart, mock, 1, 10) == HAL_OK);
     util_log("buffer cleared");
+}
+
+inline void esp_data_callback(UART_HandleTypeDef * const huart) {
+    HAL_UART_AbortReceive_IT(huart);
+    HAL_GPIO_TogglePin(GPIOD, GPIO_PIN_13);
+    if(huart->Instance == USART3) {
+        switch (esp_connection_state) {
+            case WAIT_HEADER:
+            {
+                const uint16_t body_size = esp_process_header();
+                HAL_UART_Receive_IT(huart, esp_received_packet_body, body_size);
+            }
+                break;
+            case WAIT_BODY:
+                esp_process_body();
+                HAL_UART_Receive_IT(huart, esp_received_packet_header, sizeof(esp_received_packet_header));
+                break;
+            case IDLE:
+                CDC_Transmit_FS(esp_uart_receive, esp_uart_size);
+                HAL_UART_Receive_IT(huart, esp_uart_receive, esp_uart_size);
+                break;
+            default:break;
+        }
+    }
+}
+
+void esp_start(UART_HandleTypeDef * const huart) {
+    HAL_UART_Receive_IT(huart, esp_uart_receive, esp_uart_size);
+
+    esp_init(huart);
+    esp_passthrough(huart);
+
+    HAL_UART_AbortReceive_IT(huart);
+    HAL_UART_Receive_IT(huart, esp_received_packet_header, sizeof(esp_received_packet_header));
+}
+
+void esp_send_command(UART_HandleTypeDef * huart, uint8_t * const command, const uint16_t size) {
+    HAL_UART_Transmit_IT(huart, command, size);
+    HAL_Delay(200);
+}
+
+void esp_send_def_command(UART_HandleTypeDef * huart, const char * const command) {
+    esp_send_command(huart, (uint8_t *) command, (const uint16_t) strlen(command));
 }

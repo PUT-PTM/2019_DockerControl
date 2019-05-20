@@ -47,7 +47,6 @@
 
 #include "usbd_cdc_if.h"
 
-#include "hd44780.h"
 #include "menu/menu.h"
 /* USER CODE END Includes */
 
@@ -88,11 +87,9 @@ extern char wifi_name;
 extern char wifi_password;
 
 // esp driver
-extern uint8_t packet_received;
-extern uint8_t received_packet_header[10];
-extern uint8_t received_packet_body[4096];
-
-extern enum esp_connection_state connection_state;
+extern uint8_t esp_packet_received;
+extern uint8_t esp_received_packet_header[10];
+extern uint8_t esp_received_packet_body[4096];
 
 // dc
 extern enum DC_COMMAND_ENUM cmd;
@@ -104,15 +101,8 @@ extern struct container dc_containers[];
 extern uint8_t dc_new_images;
 extern uint8_t dc_images_size;
 extern image dc_images[];
+extern uint8_t dc_update;
 extern struct stats dc_stats;
-
-// uart
-uint8_t uart_receive[5];
-const uint16_t uart_size = 5;
-
-// usb
-uint8_t usb_data[40];
-uint8_t usb_received = 0;
 
 /* USER CODE END PV */
 
@@ -125,36 +115,8 @@ static void MX_TIM2_Init(void);
 static void MX_TIM4_Init(void);
 /* USER CODE BEGIN PFP */
 
-void start_dc() {
-    HAL_UART_Receive_IT(&huart3, uart_receive, uart_size);
-
-    dc_start_session(&huart3);
-
-    HAL_UART_AbortReceive_IT(&huart3);
-    HAL_UART_Receive_IT(&huart3, received_packet_header, sizeof(received_packet_header));
-}
-
-void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart) {
-    HAL_UART_AbortReceive_IT(huart);
-    HAL_GPIO_TogglePin(GPIOD, GPIO_PIN_13);
-    if(huart->Instance == USART3) {
-        switch (connection_state) {
-            case WAIT_HEADER:
-            {
-                const uint16_t body_size = esp_process_header();
-                HAL_UART_Receive_IT(huart, received_packet_body, body_size);
-            }
-                break;
-            case WAIT_BODY:
-                esp_process_body(huart);
-                HAL_UART_Receive_IT(huart, received_packet_header, sizeof(received_packet_header));
-                break;
-            case IDLE:
-                CDC_Transmit_FS(uart_receive, uart_size);
-                HAL_UART_Receive_IT(huart, uart_receive, uart_size);
-                break;
-        }
-    }
+void HAL_UART_RxCpltCallback(UART_HandleTypeDef * huart) {
+    esp_data_callback(huart);
 }
 
 void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim) {
@@ -175,14 +137,8 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim) {
     HAL_GPIO_TogglePin(GPIOD, GPIO_PIN_15);
     HAL_TIM_Base_Stop(&htim2);
   }
-  if (htim->Instance == TIM4) { // TODO
-    HAL_GPIO_TogglePin(GPIOD, GPIO_PIN_12);
-    cmd = CALL;
-    dc_send(&huart3);
-
-    //TODO: check if delay is needed
-    cmd = IALL;
-    dc_send(&huart3);
+  if (htim->Instance == TIM4) {
+      dc_update_callback();
   }
 }
 
@@ -237,14 +193,13 @@ int main(void)
   util_log("DockerControl init");
 
   HAL_TIM_Encoder_Start(&htim1, TIM_CHANNEL_ALL);
-//  HAL_TIM_Base_Start_IT(&htim4); //TODO: find place to start timer
-  hd44780_init(GPIOA, GPIO_PIN_1, GPIO_PIN_2, GPIO_PIN_3, GPIO_PIN_4, GPIO_PIN_5, GPIO_PIN_6, GPIO_PIN_7, HD44780_LINES_2, HD44780_FONT_5x8);
+  TM_HD44780_Init(24, 2);
 
   HAL_GPIO_WritePin(GPIOD, GPIO_PIN_12, GPIO_PIN_SET);
   util_log("DockerControl ready");
 
   connection_menu();
-  start_dc();
+  dc_start(&huart3, &htim4);
 
   /* USER CODE END 2 */
 
@@ -258,20 +213,21 @@ int main(void)
     while (1)
     {
         if (dc_ready) {
+            util_log("dc_ready action");
+
             dc_send(&huart3);
             dc_ready = 0;
         }
-        else if (packet_received) {
-            util_log("got packet");
+        else if (esp_packet_received) {
+            util_log("esp_packet_received action");
             dc_wait = 0;
+            dc_new_cmd(esp_received_packet_header, esp_received_packet_body);
 
-            dc_new_cmd(received_packet_header, received_packet_body);
-
-            packet_received = 0;
+            esp_packet_received = 0;
         }
-        else if (usb_received) {
-            HAL_UART_Transmit_IT(&huart3, usb_data, sizeof(usb_data));
-            usb_received = 0;
+        else if (dc_update) {
+            util_log("dc_update action");
+            dc_update_action();
         }
         else if (!dc_wait) {
             main_menu(dc_containers, &dc_containers_size, dc_images, &dc_images_size, &dc_stats);
@@ -441,9 +397,9 @@ static void MX_TIM4_Init(void)
 
   /* USER CODE END TIM4_Init 1 */
   htim4.Instance = TIM4;
-  htim4.Init.Prescaler = 35999;
+  htim4.Init.Prescaler = 41999;
   htim4.Init.CounterMode = TIM_COUNTERMODE_UP;
-  htim4.Init.Period = 19999;
+  htim4.Init.Period = 59999;
   htim4.Init.ClockDivision = TIM_CLOCKDIVISION_DIV1;
   if (HAL_TIM_Base_Init(&htim4) != HAL_OK)
   {
@@ -515,7 +471,7 @@ static void MX_GPIO_Init(void)
   __HAL_RCC_GPIOD_CLK_ENABLE();
 
   /*Configure GPIO pin Output Level */
-  HAL_GPIO_WritePin(GPIOA, GPIO_PIN_1|GPIO_PIN_2|GPIO_PIN_3|GPIO_PIN_4
+  HAL_GPIO_WritePin(GPIOA, GPIO_PIN_1|GPIO_PIN_2|GPIO_PIN_3|GPIO_PIN_4 
                           |GPIO_PIN_5|GPIO_PIN_6|GPIO_PIN_7, GPIO_PIN_RESET);
 
   /*Configure GPIO pin Output Level */
@@ -530,9 +486,9 @@ static void MX_GPIO_Init(void)
   GPIO_InitStruct.Pull = GPIO_PULLDOWN;
   HAL_GPIO_Init(GPIOE, &GPIO_InitStruct);
 
-  /*Configure GPIO pins : PA1 PA2 PA3 PA4
+  /*Configure GPIO pins : PA1 PA2 PA3 PA4 
                            PA5 PA6 PA7 */
-  GPIO_InitStruct.Pin = GPIO_PIN_1|GPIO_PIN_2|GPIO_PIN_3|GPIO_PIN_4
+  GPIO_InitStruct.Pin = GPIO_PIN_1|GPIO_PIN_2|GPIO_PIN_3|GPIO_PIN_4 
                           |GPIO_PIN_5|GPIO_PIN_6|GPIO_PIN_7;
   GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
   GPIO_InitStruct.Pull = GPIO_NOPULL;

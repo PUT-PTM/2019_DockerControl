@@ -294,8 +294,8 @@ static int8_t CDC_Receive_FS(uint8_t* Buf, uint32_t *Len)
   USBD_CDC_SetRxBuffer(&hUsbDeviceFS, &Buf[0]);
   USBD_CDC_ReceivePacket(&hUsbDeviceFS);
 
-  extern uint8_t usb_data[40];
-  extern uint16_t usb_received;
+  uint8_t usb_data[40];
+  uint16_t usb_received;
 
   for(int i = 0; i < 40; ++i) usb_data[i] = 0;
   strncpy((char *) usb_data, (const char *) Buf, (*Len));

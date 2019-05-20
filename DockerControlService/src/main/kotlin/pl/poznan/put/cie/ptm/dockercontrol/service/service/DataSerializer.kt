@@ -6,7 +6,7 @@ import pl.poznan.put.cie.ptm.dockercontrol.service.docker.model.Stats
 import java.lang.StringBuilder
 
 object DataSerializer {
-    fun toContainerArray(containers: List<Container>): String {
+    fun toContainersArray(containers: List<Container>): String {
         val builder = StringBuilder()
         containers.forEach { builder.append("${toContainer(it)};") }
         return builder.toString()
@@ -49,7 +49,7 @@ object DataSerializer {
         .replace(" About", " ~")
         .replace(" an", "")
 
-    fun toImageArray(images: List<Image>): String {
+    fun toImagesArray(images: List<Image>): String {
         val builder = StringBuilder()
         images.forEach { builder.append("${toImage(it)};") }
         return builder.toString()
@@ -66,4 +66,10 @@ object DataSerializer {
             "${stats.images}," +
             "${stats.cpu}," +
             "${stats.memory / MEGA}"
+
+    fun toIdsArray(ids: List<String>): String {
+        val builder = StringBuilder()
+        ids.forEach { builder.append("$it;") }
+        return builder.toString()
+    }
 }
