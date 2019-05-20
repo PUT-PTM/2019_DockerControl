@@ -81,7 +81,7 @@ int button_confirm() {
 }
 
 static inline const uint8_t menu_condition(const uint8_t condition) {
-    return condition && !dc_alert && !dc_update && !esp_packet_received;
+    return condition && !dc_update && !esp_packet_received;
 }
 
 void update_screen() {
