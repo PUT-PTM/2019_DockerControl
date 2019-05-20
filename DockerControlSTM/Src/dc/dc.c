@@ -26,7 +26,6 @@ struct stats dc_stats;
 uint8_t dc_alerts_size = 0;
 alert dc_alerts[20];
 
-uint8_t dc_alert = 0;
 uint8_t dc_update = 0;
 int16_t dc_since_update = 0;
 
@@ -97,7 +96,6 @@ void dc_update_alerts(const uint8_t * const packet_body) {
         dc_cmd_get_data(packet_body, &i, dc_alerts[dc_alerts_size]);
         dc_alerts_size++;
     }
-    dc_alert = 0;
 }
 
 void dc_clear_alerts() {
