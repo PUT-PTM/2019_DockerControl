@@ -21,8 +21,14 @@ object DockerControl {
 
     fun run() = runBlocking {
         launch { acceptSessions() }
-        launch { while (isActive) updateAlerts() }
-        launch { while (isActive) updateSessions() }
+        launch {
+            delay(ALERTS_UPDATE_DELAY)
+            while (isActive) updateAlerts()
+        }
+        launch {
+            delay(SESSION_UPDATE_DELAY)
+            while (isActive) updateSessions()
+        }
         Logger.log("DockerControlService started")
     }
 
