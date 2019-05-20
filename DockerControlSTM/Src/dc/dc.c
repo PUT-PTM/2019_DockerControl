@@ -4,6 +4,8 @@
 
 enum DC_COMMAND_ENUM cmd = ACKN;
 
+enum DC_COMMAND_ENUM containers_cmd = CALL;
+
 char dc_session_id[4] = "000";
 
 uint8_t dc_ready = 0;
@@ -127,7 +129,7 @@ void dc_apply_cmd(const uint8_t * const packet_header, const uint8_t * const pac
     switch (cmd) {
         case READ:
             dc_set_session_id(packet_header);
-            cmd = CALL;
+            cmd = containers_cmd;
             dc_set_ready();
             break;
         case ACKN:break;
@@ -235,8 +237,16 @@ void dc_update_callback() {
 }
 
 void dc_update_action() {
-    cmd = CALL;
+    cmd = containers_cmd;
     dc_add_empty_data();
     dc_set_ready();
     dc_update = 0;
+}
+
+void dc_set_containers_update_all() {
+    containers_cmd = CALL;
+}
+
+void dc_set_containers_update_active() {
+    containers_cmd = CACT;
 }
