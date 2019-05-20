@@ -36,7 +36,9 @@ void connection_menu();
 
 void main_menu(const struct container * containers, const uint8_t * containers_size,
                const image * images, const uint8_t * images_size,
-               const struct stats * _stats);
+               const struct stats * _stats,
+               const alert * _alert, const uint8_t * alerts_size
+                       );
 
 uint8_t menu_container_action(const uint8_t * container_index);
 

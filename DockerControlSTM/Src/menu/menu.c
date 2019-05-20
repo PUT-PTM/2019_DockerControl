@@ -345,11 +345,11 @@ uint8_t main_menu_containers(uint8_t * const current_menu, const struct containe
         uint8_t i = positions % *size;
 
         if (!show_details) {
-            menu_line(0, (uint8_t *) "%s", containers[i].name);
-            menu_line(1, (uint8_t *) "%-11s  %11s", containers[i].state, containers[i].status);
+            menu_line(0, "%s", containers[i].name);
+            menu_line(1, "%-11s  %11s", containers[i].state, containers[i].status);
         } else {
-            menu_line(0, (uint8_t *) "%s", containers[i].name);
-            menu_line(1, (uint8_t *) "%s", containers[i].image);
+            menu_line(0, "%s", containers[i].name);
+            menu_line(1, "%s", containers[i].image);
         }
 
         if (button_enter()) {
@@ -380,7 +380,7 @@ void main_menu_images(uint8_t * const current_menu, const image * const images, 
         positions = (uint8_t) (pulse_count / 4);
         uint8_t i = positions % *size;
 
-        menu_line(0, (uint8_t *) "%s", images[i]);
+        menu_line(0, "%s", images[i]);
         menu_line(1, "      >create<");
 
         if (button_back()) {
@@ -396,14 +396,25 @@ void main_menu_images(uint8_t * const current_menu, const image * const images, 
     }
 }
 
-void main_menu_alerts(uint8_t * const current_menu) {
+void main_menu_alerts(uint8_t * const current_menu, const alert * const _alert, const uint8_t * const alerts_size) {
     uint8_t show_alerts_finished = 0;
 
     while(menu_condition(!show_alerts_finished)) {
-
-        menu_line(0, "Alerts");
-        menu_line(1, "" );
-
+        pulse_count = (uint8_t) TIM1->CNT;
+        positions = (uint8_t) (pulse_count / 4);
+        uint8_t i = positions % *alerts_size;
+        if(*alerts_size == 0){
+            menu_line(0, "No alerts");
+            menu_line(1," ");
+        } else {
+            menu_line(0, "%d: %.20s", i, _alert[i]);
+            if(i+1 < *alerts_size) {
+                menu_line(1, "%d: %.20s", i + 1, _alert[i + 1]);
+            }
+            else{
+                menu_line(1, "%d: %.20s", 0, _alert[0]);
+            }
+        }
         if (button_back()) {
             show_alerts_finished = 1;
             *current_menu = MAIN_START;
@@ -441,7 +452,8 @@ void main_menu_stats(uint8_t * const current_menu, const struct stats * const st
 inline void main_menu(
     const struct container * const containers, const uint8_t * const containers_size,
     const image * const images, const uint8_t * const images_size,
-    const struct stats * const _stats
+    const struct stats * const _stats,
+    const alert * const _alert, const uint8_t * const alerts_size
 ) {
     util_log("main menu begin");
     uint8_t current_menu = MAIN_START;
@@ -460,7 +472,7 @@ inline void main_menu(
                 main_menu_images(&current_menu, images, images_size);
                 break;
             case MAIN_ALERTS:
-                main_menu_alerts(&current_menu);
+                main_menu_alerts(&current_menu, _alert, alerts_size);
                 break;
             case MAIN_STATS:
                 main_menu_stats(&current_menu, _stats);
