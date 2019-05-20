@@ -104,6 +104,7 @@ extern struct container dc_containers[];
 extern uint8_t dc_new_images;
 extern uint8_t dc_images_size;
 extern image dc_images[];
+extern struct stats dc_stats;
 
 // uart
 uint8_t uart_receive[5];
@@ -244,6 +245,7 @@ int main(void)
 
   connection_menu();
   start_dc();
+
   /* USER CODE END 2 */
 
   /* Infinite loop */
@@ -272,7 +274,7 @@ int main(void)
             usb_received = 0;
         }
         else if (!dc_wait) {
-            main_menu(dc_containers, &dc_containers_size, dc_images, &dc_images_size);
+            main_menu(dc_containers, &dc_containers_size, dc_images, &dc_images_size, &dc_stats);
         }
 
     /* USER CODE END WHILE */
