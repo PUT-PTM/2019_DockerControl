@@ -16,7 +16,7 @@ object DockerControl {
 
     private val sessions = mutableListOf<Session>()
 
-    private const val SESSION_UPDATE_DELAY: Long = 60_000 // TODO: kill sessions inactive for triple CALL interval
+    private const val SESSION_UPDATE_DELAY: Long = 120_000
     private const val ALERTS_UPDATE_DELAY: Long = 15_000
 
     fun run() = runBlocking {
