@@ -494,7 +494,7 @@ inline void main_menu(
                 menu_finished = main_menu_containers(&current_menu, containers, containers_size);
                 break;
             case MAIN_IMAGES:
-                main_menu_images(&current_menu, images, images_size);
+                menu_finished = main_menu_images(&current_menu, images, images_size);
                 break;
             case MAIN_ALERTS:
                 main_menu_alerts(&current_menu);
