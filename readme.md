@@ -1,9 +1,25 @@
 # DockerControl
 
 ## overview
-Docker Control is a device that allows you to remotely control any Docker instances.
+Docker Control is a device that allows you to remotely control any Docker instance.
 
 ## description
+The system consists of two parts: STM device and server application. 
+
+Server application can be run on any Docker instance with dedicated Dockerfile. It connects to Docker and facilitates custom over TCP protocol communication with STM. STM device lets user perform various operations on Docker, get system statistics and alers the user on containers death.
+
+Supported operations are:
+* Display all containers
+*	Display running containers
+* Start container
+*	Stop container
+*	Restart container
+*	Remove container
+*	Create container from image
+*	Display all images
+*	Display stats of system
+*	Notify about container death
+
 ### server
 tba
 
@@ -93,7 +109,9 @@ tba
 tba
 
 ## future improvements
-tba
+* showcase mode for containers
+* _beep_ on alert
+* screen with backlight
 
 ## attributions
 [Libraries for STM32Fxxx series by Tilen Majerl.](https://stm32f4-discovery.net)
