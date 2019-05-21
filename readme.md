@@ -1,7 +1,7 @@
 # DockerControl
 
 ## overview
-tba
+Docker Control is a device that allows you to remotely control any Docker instances.
 
 ## description
 ### server
@@ -71,7 +71,7 @@ hardware:
 * microcontroller STM32F4407G
 * wifi module ESP8266
 * lcd screen 24x2
-* ...
+* encoder with button
 
 language:  **C** with *HAL*
 
@@ -96,7 +96,7 @@ tba
 tba
 
 ## attributions
-tba
+[Libraries for STM32Fxxx series by Tilen Majerl.](https://stm32f4-discovery.net)
 
 ## license
 MIT (see LICENSE.md)
