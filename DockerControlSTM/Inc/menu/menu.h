@@ -40,6 +40,4 @@ void main_menu(const struct container * containers, const uint8_t * containers_s
                const alert * _alert, const uint8_t * alerts_size
                        );
 
-uint8_t menu_container_action(const uint8_t * container_index);
-
 #endif

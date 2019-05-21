@@ -334,6 +334,39 @@ void main_menu_start(uint8_t * const current_menu) {
     }
 }
 
+const uint8_t main_menu_container_action(const uint8_t * const container_index) {
+    while(menu_condition(!button_enter())) {
+        pulse_count = (uint8_t) TIM1->CNT;
+        positions = (uint8_t) (pulse_count / 4);
+        uint8_t i = positions % 4;
+        switch(i) {
+            case 0:
+                cmd = CSTR;
+                menu_line(1, ">start restart stop del");
+                break;
+            case 1:
+                cmd = CRST;
+                menu_line(1, " start>restart stop del");
+                break;
+            case 2:
+                cmd = CSTP;
+                menu_line(1, " start restart>stop del");
+                break;
+            case 3:
+                cmd = CRMV;
+                menu_line(1, " start restart stop>del");
+                break;
+            default:
+                break;
+        }
+
+        if (button_back()) return 0;
+    }
+    dc_add_data_container(container_index);
+    dc_set_ready();
+    return 1;
+}
+
 uint8_t main_menu_containers(uint8_t * const current_menu, const struct container * const containers, const uint8_t * const size) {
     uint8_t show_details = 0;
     uint8_t show_containers_finished = 0;
@@ -356,7 +389,7 @@ uint8_t main_menu_containers(uint8_t * const current_menu, const struct containe
             show_details = !show_details;
         }
         if (button_shift()) {
-            action_performed = menu_container_action(&i);
+            action_performed = main_menu_container_action(&i);
             if (action_performed) show_containers_finished = 1;
         }
         if (button_back()) {
@@ -371,7 +404,7 @@ uint8_t main_menu_containers(uint8_t * const current_menu, const struct containe
     return action_performed;
 }
 
-void main_menu_images(uint8_t * const current_menu, const image * const images, const uint8_t * const size) {
+const uint8_t main_menu_images(uint8_t * const current_menu, const image * const images, const uint8_t * const size) {
     uint8_t show_images_finished = 0;
     uint8_t action_performed = 0;
 
@@ -381,7 +414,7 @@ void main_menu_images(uint8_t * const current_menu, const image * const images, 
         uint8_t i = positions % *size;
 
         menu_line(0, "%s", images[i]);
-        menu_line(1, "      >create<");
+        menu_line(1, ">create<");
 
         if (button_back()) {
             show_images_finished = 1;
@@ -389,11 +422,15 @@ void main_menu_images(uint8_t * const current_menu, const image * const images, 
         }
         if (button_confirm()) {
             cmd = CCRT;
+            dc_add_data_image(&i);
             dc_set_ready();
             *current_menu = MAIN_START;
             show_images_finished = 1;
+            action_performed = 1;
         }
     }
+
+    return action_performed;
 }
 
 void main_menu_alerts(uint8_t * const current_menu, const alert * const _alert, const uint8_t * const alerts_size) {
@@ -469,7 +506,7 @@ inline void main_menu(
                 menu_finished = main_menu_containers(&current_menu, containers, containers_size);
                 break;
             case MAIN_IMAGES:
-                main_menu_images(&current_menu, images, images_size);
+                menu_finished = main_menu_images(&current_menu, images, images_size);
                 break;
             case MAIN_ALERTS:
                 main_menu_alerts(&current_menu, _alert, alerts_size);
@@ -482,37 +519,4 @@ inline void main_menu(
         }
     }
     util_log("main menu end");
-}
-
-uint8_t menu_container_action(const uint8_t * const container_index) {
-    while(menu_condition(!button_enter())) {
-        pulse_count = (uint8_t) TIM1->CNT;
-        positions = (uint8_t) (pulse_count / 4);
-        uint8_t i = positions % 4;
-        switch(i) {
-            case 0:
-                cmd = CSTR;
-                menu_line(1, ">start restart stop del");
-                break;
-            case 1:
-                cmd = CRST;
-                menu_line(1, " start>restart stop del");
-                break;
-            case 2:
-                cmd = CSTP;
-                menu_line(1, " start restart>stop del");
-                break;
-            case 3:
-                cmd = CRMV;
-                menu_line(1, " start restart stop>del");
-                break;
-            default:
-                break;
-        }
-
-        if (button_back()) return 0;
-    }
-    dc_add_data_container(container_index);
-    dc_set_ready();
-    return 1;
 }

@@ -4,6 +4,8 @@
 
 enum DC_COMMAND_ENUM cmd = ACKN;
 
+enum DC_COMMAND_ENUM containers_cmd = CALL;
+
 char dc_session_id[4] = "000";
 
 uint8_t dc_ready = 0;
@@ -28,6 +30,9 @@ alert dc_alerts[20];
 
 uint8_t dc_update = 0;
 int16_t dc_since_update = 0;
+uint8_t dc_containers_update = 0;
+uint8_t dc_images_update = 0;
+uint8_t dc_stats_update = 0;
 
 const uint8_t dc_cmd_copy_data_condition(const uint8_t * const d) {
     if (*d != PACKET_DATA_DELIMITER && *d != PACKET_DATA_ARRAY_DELIMITER && *d != PACKET_END) return 1;
@@ -41,6 +46,22 @@ const uint8_t dc_cmd_copy_data(const uint8_t * const source, const uint16_t star
     return length;
 }
 
+void dc_start_update(TIM_HandleTypeDef * const htim) {
+    dc_since_update = -5 * DC_UPDATE_INTERVAL;
+    dc_update_callback();
+    HAL_TIM_Base_Start_IT(htim);
+    util_log("update timer started");
+}
+
+void dc_start(UART_HandleTypeDef * const huart_esp, TIM_HandleTypeDef * const htim_update) {
+    esp_start(huart_esp);
+
+    cmd = READ;
+    dc_send(huart_esp);
+
+    dc_start_update(htim_update);
+}
+
 void dc_cmd_get_data(const uint8_t * const packet_body, uint16_t * const i, uint8_t * const destination) {
     const uint8_t length = dc_cmd_copy_data(packet_body, *i, destination);
     *(destination + length) = '\0';
@@ -51,6 +72,18 @@ void dc_set_session_id(const uint8_t * const packet_header) {
     strncpy(dc_session_id, (const char *) packet_header + 1, 3);
     dc_session_id[3] = '\0';
     util_log(dc_session_id);
+}
+
+void dc_ready_action(const uint8_t * const packet_header) {
+    dc_set_session_id(packet_header);
+    dc_since_update = DC_UPDATE_INTERVAL;
+    dc_update_callback();
+}
+
+void dc_ackn_action() {
+    cmd = ACKN;
+    dc_add_empty_data();
+    dc_set_ready();
 }
 
 void dc_update_containers(const uint8_t * const packet_body) {
@@ -126,23 +159,35 @@ void dc_resolve_cmd(const uint8_t * const packet_body) {
 void dc_apply_cmd(const uint8_t * const packet_header, const uint8_t * const packet_body) {
     switch (cmd) {
         case READ:
-            dc_set_session_id(packet_header);
-            cmd = CALL;
-            dc_set_ready();
+            dc_ready_action(packet_header);
             break;
-        case ACKN:break;
+        case ACKN:
+            dc_ackn_action();
+            break;
         case CALL:
             dc_update_containers(packet_body);
             break;
         case CACT:
             dc_update_containers(packet_body);
             break;
-        case CSTS:break;
-        case CSTR:break;
-        case CSTP:break;
-        case CRST:break;
-        case CRMV:break;
-        case CCRT:break;
+        case CSTS:
+            dc_update_stats(packet_body);
+            break;
+        case CSTR:
+            // not receive
+            break;
+        case CSTP:
+            // not receive
+            break;
+        case CRST:
+            // not receive
+            break;
+        case CRMV:
+            // not receive
+            break;
+        case CCRT:
+            // not receive
+            break;
         case IALL:
             dc_update_images(packet_body);
             break;
@@ -152,7 +197,9 @@ void dc_apply_cmd(const uint8_t * const packet_header, const uint8_t * const pac
         case ALRT:
             dc_update_alerts(packet_body);
             break;
-        case ERRR:break;
+        case ERRR:
+            util_log((char*)packet_body);
+            break;
         default:break;
     }
 }
@@ -201,22 +248,6 @@ void dc_make_body() {
     dc_body[5 + dc_data_size] = PACKET_END;
 }
 
-void dc_start_update_timer(TIM_HandleTypeDef * const htim) {
-    dc_since_update = -2 * DC_UPDATE_INTERVAL;
-    dc_update = 0;
-    HAL_TIM_Base_Start_IT(htim);
-    util_log("update timer started");
-}
-
-void dc_start(UART_HandleTypeDef * const huart_esp, TIM_HandleTypeDef * const htim_update) {
-    esp_start(huart_esp);
-
-    cmd = READ;
-    dc_send(huart_esp);
-
-    dc_start_update_timer(htim_update);
-}
-
 void dc_send(UART_HandleTypeDef * const huart) {
     util_log("sending packet");
     dc_make_body();
@@ -226,17 +257,48 @@ void dc_send(UART_HandleTypeDef * const huart) {
     dc_wait = 1;
 }
 
-void dc_update_callback() {
+inline void dc_update_callback() {
     dc_since_update += DC_UPDATE_TIMER_INTERVAL;
     if (dc_since_update >= DC_UPDATE_INTERVAL) {
-        dc_update = 1;
-        dc_since_update = -DC_UPDATE_TIMER_INTERVAL;
+        if (!dc_update) {
+            dc_update = 1;
+            dc_containers_update = 1;
+            dc_images_update = 1;
+            dc_stats_update = 1;
+            dc_since_update = 0;
+        }
     }
 }
 
-void dc_update_action() {
-    cmd = CALL;
-    dc_add_empty_data();
-    dc_set_ready();
-    dc_update = 0;
+inline void dc_update_action() {
+    if (dc_containers_update) {
+        cmd = containers_cmd;
+        dc_add_empty_data();
+        dc_set_ready();
+        dc_containers_update = 0;
+    }
+    else if (dc_images_update) {
+        cmd = IALL;
+        dc_add_empty_data();
+        dc_set_ready();
+        dc_images_update = 0;
+    }
+    else if (dc_stats_update) {
+        cmd = SSTS;
+        dc_add_empty_data();
+        dc_set_ready();
+        dc_stats_update = 0;
+    }
+    else {
+        dc_update = 0;
+    }
+    dc_wait = 1;
+}
+
+void dc_set_containers_update_all() {
+    containers_cmd = CALL;
+}
+
+void dc_set_containers_update_active() {
+    containers_cmd = CACT;
 }

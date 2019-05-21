@@ -45,5 +45,7 @@ void dc_send(UART_HandleTypeDef * huart);
 
 void dc_update_callback();
 void dc_update_action();
+void dc_set_containers_update_all();
+void dc_set_containers_update_active();
 
 #endif //DOCKERCONTROLSTM_DC_H
