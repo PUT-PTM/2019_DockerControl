@@ -100,13 +100,13 @@ void menu_line(uint8_t line, char *format, ...) {
     va_end(args);
     if(line == 0) {
         if (strcmp(menu_first_line, buffer) != 0) {
-            strcpy(menu_first_line, buffer);
+            strxfrm(menu_first_line, buffer, 24);
             update_screen();
         }
     }
     else if (line == 1) {
         if (strcmp(menu_second_line, buffer) != 0) {
-            strcpy(menu_second_line, buffer);
+            strxfrm(menu_second_line, buffer, 24);
             update_screen();
         }
     }
