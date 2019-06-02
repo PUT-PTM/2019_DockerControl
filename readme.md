@@ -21,12 +21,10 @@ Supported operations are:
 *	Notify about container death
 
 ### server
-tba
+DockerControlService is a TCP service-like server suppprting custom protocol communication with DockerControl on STM and Docker managment via REST API. The application runs asynchrically and can handle multiple sessions at one time.
 
 ### stm
 ![Menu Flow](menu_flow.png) 
-
-tba
 
 ### communication
 #### protocol
@@ -42,6 +40,8 @@ header: `$<sessionId:uint8[3]>!<bodySize:uint12[4]!` body: `<cmd:char[4]>!<data?
 **image:** `image:char[50]`
 
 **stats:** `active_containers:uint[2], paused_containers:uint[2], stopped_containers:uint[2], images:uint[4], cpu:uint[2], memory:uint[6]`
+
+**alert:** `containerId:char[64]`
 
 #### commands
 | CMD | data from STM | data from server | notes|
@@ -79,7 +79,6 @@ header: `$<sessionId:uint8[3]>!<bodySize:uint12[4]!` body: `<cmd:char[4]>!<data?
 language:  **Kotlin** with [*Ktor*](https://ktor.io/) for networking and [*Jackson*](https://github.com/FasterXML/jackson) for parsing JSON data
 
 other technologies:
-* **Docker** for deploying
 * **Gradle** for build automation and dependency managment
 
 ### stm
@@ -102,9 +101,6 @@ The file `config.json` on the server and the file `esp_connnection_data.h` on th
 #### run locally
 `./gradlew run`
 
-#### run on Docker
-tba
-
 ### stm
 tba
 
@@ -112,6 +108,8 @@ tba
 * showcase mode for containers
 * _beep_ on alert
 * screen with backlight
+* single power source for stm and esp
+* less resource consuming updates
 
 ## attributions
 [Libraries for STM32Fxxx series by Tilen Majerl.](https://stm32f4-discovery.net)
