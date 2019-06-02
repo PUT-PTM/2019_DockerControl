@@ -20,11 +20,17 @@ Supported operations are:
 *	Display stats of system
 *	Notify about container death
 
+![dc_up](docs/dc_up.jpg)
+![dc_front](docs/dc_front.jpg)
+![dc_inside](docs/dc_inside.jpg)
+![dc_menu_1](docs/dc_menu_1.jpg)
+![dc_menu_2](docs/dc_munu_2.jpg)
+
 ### server
 DockerControlService is a TCP service-like server suppprting custom protocol communication with DockerControl on STM and Docker managment via REST API. The application runs asynchrically and can handle multiple sessions at one time.
 
 ### stm
-![Menu Flow](menu_flow.png) 
+![Menu Flow](docs/menu_flow.png) 
 
 ### communication
 #### protocol
