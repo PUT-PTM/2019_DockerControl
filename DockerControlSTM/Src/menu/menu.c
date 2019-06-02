@@ -281,7 +281,7 @@ void connection_menu() {
                 connection_menu_start(&current_menu);
                 break;
             case MENU_DEFAULT:
-                menu_line(0, "Connecting using defaults");
+                menu_line(0, "Connecting...");
                 menu_line(1, "");
                 menu_finished = 1;
                 break;
