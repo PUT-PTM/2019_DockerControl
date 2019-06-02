@@ -390,7 +390,10 @@ uint8_t main_menu_containers(uint8_t * const current_menu, const struct containe
         }
         if (button_shift()) {
             action_performed = main_menu_container_action(&i);
-            if (action_performed) show_containers_finished = 1;
+            if (action_performed) {
+                *current_menu = MAIN_START;
+                show_containers_finished = 1;
+            }
         }
         if (button_back()) {
             *current_menu = MAIN_START;
