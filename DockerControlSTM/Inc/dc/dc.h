@@ -24,8 +24,8 @@ struct stats {
 
 typedef uint8_t alert[65];
 
-#define DC_UPDATE_TIMER_INTERVAL 30
-#define DC_UPDATE_INTERVAL 30
+#define DC_UPDATE_TIMER_INTERVAL 5
+#define DC_UPDATE_INTERVAL 15
 
 void dc_new_cmd(const uint8_t * packet_header, const uint8_t * packet_body);
 void dc_resolve_cmd(const uint8_t * packet_body);
