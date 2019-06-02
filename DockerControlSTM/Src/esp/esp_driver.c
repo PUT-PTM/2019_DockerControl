@@ -38,6 +38,12 @@ void esp_wait(UART_HandleTypeDef * const huart) {
     }
 }
 
+void esp_trigg() {
+    util_log("esp trigg...");
+    HAL_GPIO_WritePin(GPIOD, GPIO_PIN_11, GPIO_PIN_SET);
+    HAL_Delay(50);
+}
+
 void esp_init(UART_HandleTypeDef * const huart) {
     esp_wait(huart);
 
@@ -155,6 +161,7 @@ inline void esp_data_callback(UART_HandleTypeDef * const huart) {
 void esp_start(UART_HandleTypeDef * const huart) {
     HAL_UART_Receive_IT(huart, esp_uart_receive, esp_uart_size);
 
+    esp_trigg();
     esp_init(huart);
     esp_passthrough(huart);
 

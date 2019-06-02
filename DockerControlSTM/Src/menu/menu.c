@@ -32,6 +32,7 @@ extern uint8_t esp_packet_received;
 
 // menu
 uint8_t menu_finished = 0;
+uint8_t current_main_menu = MAIN_START;
 
 // buttons
 volatile uint8_t enter_pressed = 0; //encoder
@@ -99,13 +100,13 @@ void menu_line(uint8_t line, char *format, ...) {
     va_end(args);
     if(line == 0) {
         if (strcmp(menu_first_line, buffer) != 0) {
-            strcpy(menu_first_line, buffer);
+            strxfrm(menu_first_line, buffer, 24);
             update_screen();
         }
     }
     else if (line == 1) {
         if (strcmp(menu_second_line, buffer) != 0) {
-            strcpy(menu_second_line, buffer);
+            strxfrm(menu_second_line, buffer, 24);
             update_screen();
         }
     }
@@ -280,7 +281,7 @@ void connection_menu() {
                 connection_menu_start(&current_menu);
                 break;
             case MENU_DEFAULT:
-                menu_line(0, "Connecting using defaults");
+                menu_line(0, "Connecting...");
                 menu_line(1, "");
                 menu_finished = 1;
                 break;
@@ -390,7 +391,10 @@ uint8_t main_menu_containers(uint8_t * const current_menu, const struct containe
         }
         if (button_shift()) {
             action_performed = main_menu_container_action(&i);
-            if (action_performed) show_containers_finished = 1;
+            if (action_performed) {
+                *current_menu = MAIN_START;
+                show_containers_finished = 1;
+            }
         }
         if (button_back()) {
             *current_menu = MAIN_START;
@@ -493,26 +497,25 @@ inline void main_menu(
     const alert * const _alert, const uint8_t * const alerts_size
 ) {
     util_log("main menu begin");
-    uint8_t current_menu = MAIN_START;
     menu_finished = 0;
     while (menu_condition(!menu_finished)) {
         pulse_count = (uint8_t) TIM1->CNT;
         positions = (uint8_t) (pulse_count / 4);
-        switch (current_menu) {
+        switch (current_main_menu) {
             case MAIN_START:
-                main_menu_start(&current_menu);
+                main_menu_start(&current_main_menu);
                 break;
             case MAIN_CONTAINERS:
-                menu_finished = main_menu_containers(&current_menu, containers, containers_size);
+                menu_finished = main_menu_containers(&current_main_menu, containers, containers_size);
                 break;
             case MAIN_IMAGES:
-                menu_finished = main_menu_images(&current_menu, images, images_size);
+                menu_finished = main_menu_images(&current_main_menu, images, images_size);
                 break;
             case MAIN_ALERTS:
-                main_menu_alerts(&current_menu, _alert, alerts_size);
+                main_menu_alerts(&current_main_menu, _alert, alerts_size);
                 break;
             case MAIN_STATS:
-                main_menu_stats(&current_menu, _stats);
+                main_menu_stats(&current_main_menu, _stats);
                 break;
             default:
                 break;
