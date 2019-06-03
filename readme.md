@@ -108,7 +108,12 @@ The file `config.json` on the server and the file `esp_connnection_data.h` on th
 `./gradlew run`
 
 ### stm
-tba
+To run this program on STM:
+* Make sure to use STM32CubeMX Version 5.0.1
+* Generate Code using firmware version STM32Cube FW_F4 V1.22.0
+* Import generated code into CLion/Eclipse
+* In CLions case Update CMake project with STM32CubeMX project 
+* Build and run
 
 ## future improvements
 * showcase mode for containers
