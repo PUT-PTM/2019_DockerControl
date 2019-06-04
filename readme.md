@@ -115,6 +115,20 @@ To run this program on STM:
 * In CLions case Update CMake project with STM32CubeMX project 
 * Build and run
 
+### pinout
+|   | 0 | 1      | 2      | 3      | 4   | 5      | 6   | 7   | 8   | 9       | 10  | 11      | 12 | 13 | 14 | 15 |
+|---|---|--------|--------|--------|-----|--------|-----|-----|-----|---------|-----|---------|----|----|----|----|
+| A |   | LCD    | LCD    | LCD    | LCD | LCD    | LCD | LCD |     |         |     |         |    |    |    |    |
+| B |   |        |        |        |     |        |     |     |     |         |     |         |    |    |    |    |
+| C |   |        |        |        |     |        |     |     |     |         |     |         |    |    |    |    |
+| D |   | BUTTON | BUTTON | BUTTON |     |        |     |     | ESP | ESP     | ESP | ESP     |    |    |    |    |
+| E |   |        |        |        |     | BUTTON |     |     |     | Encoder |     | Encoder |    |    |    |    |
+
+* PD01 - "confirm" button
+* PD02 - "back" button
+* PD03 - "shift" button
+* PE05 - Encoder button
+
 ## future improvements
 * showcase mode for containers
 * _beep_ on alert
